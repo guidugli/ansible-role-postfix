@@ -1,0 +1,115 @@
+---
+
+- name: Check boolean values
+  assert:
+    that:
+      - vars[item] | type_debug == 'bool'
+    quiet: yes
+  when: vars[item] is defined
+  loop:
+    - pf_smtp_sasl_auth_enable
+    - pf_smtp_use_tls
+    - pf_disable_vrfy_command
+    - pf_smtpd_helo_required
+    - pf_strict_rfc821_envelopes
+    - pf_smtpd_delay_reject
+
+- name: Check string values
+  vars:
+    litem: "{{ lookup('vars', item) }}"
+  assert:
+    that:
+      - litem is string
+      - litem | length > 0
+    quiet: yes
+  when: vars[item] is defined
+  loop:
+    - pf_inet_interfaces
+    - pf_email_address
+    - pf_email_password
+    - pf_smtp_server
+    - pf_smtp_sasl_password_maps
+    - pf_mynetworks
+    - pf_smtp_tls_capath
+
+# Funny, the variables in itself are of type list
+# but when referencing them as vars['mylist'], the
+# type become AnsibleSequence
+- name: Check if lists are ok
+  vars:
+    litem: "{{ lookup('vars', item) }}"
+  assert:
+    that:
+      - litem is iterable
+      - litem | length > 0
+    quiet: yes
+  when: vars[item] is defined
+  loop:
+    - pf_smtp_sasl_security_options
+    - pf_smtpd_helo_restrictions
+    - pf_smtpd_recipient_restrictions
+    - pf_smtpd_data_restrictions
+
+# Another funny case: now instead of AnsibleUnicode
+# the returned type is str when in a loop
+- name: Check pf_smtp_sasl_security_options values
+  assert:
+    that:
+      - item is string
+      - item in pf_smtp_sasl_security_options_vv
+    quiet: yes
+  when: pf_smtp_sasl_security_options is defined
+  loop: "{{ pf_smtp_sasl_security_options }}"
+
+- name: Check pf_smtp_tls_security_level values
+  assert:
+    that:
+      - pf_smtp_tls_security_level is string
+      - pf_smtp_tls_security_level in pf_smtp_tls_security_level_vv
+    quiet: yes
+  when: pf_smtp_tls_security_level is defined
+
+- name: Check pf_smtp_tls_mandatory_ciphers values
+  assert:
+    that:
+      - pf_smtp_tls_mandatory_ciphers is string
+      - pf_smtp_tls_mandatory_ciphers in pf_smtp_tls_mandatory_ciphers_vv
+    quiet: yes
+  when: pf_smtp_tls_mandatory_ciphers is defined
+
+- name: Check pf_inet_protocols values
+  assert:
+    that:
+      - pf_inet_protocols is string
+      - pf_inet_protocols in pf_inet_protocols_vv
+    quiet: yes
+  when: pf_inet_protocols is defined
+
+- name: Check integer value variables
+  vars:
+    litem: "{{ lookup('vars', item) }}"
+  assert:
+    that:
+      - litem | int(-1) >= 0
+    quiet: yes
+  when: vars[item] is defined
+  loop:
+    - pf_smtp_server_port
+    - pf_smtpd_tls_loglevel
+    - pf_smtp_tls_loglevel
+
+- name: Check variables that represents path
+  vars:
+    pathre: '^(?:[\/])$|^(?:[\/][a-zA-Z0-9_.-]+)+[\/]?$'
+    litem: "{{ lookup('vars', item) }}"
+  assert:
+    that:
+      - litem is string
+      - litem | length > 0
+      - litem is regex(pathre)
+    quiet: yes
+  when: vars[item] is defined
+  loop:
+    - pf_smtp_sasl_password_maps
+    - pf_smtp_tls_capath
+    - pf_smtp_tls_cafile

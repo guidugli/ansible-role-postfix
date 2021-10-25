@@ -1,0 +1,73 @@
+---
+# vars file for postfix
+
+pf_main_cf_path: /etc/postfix/main.cf
+pf_main_cf_owner: root
+pf_main_cf_group: root
+pf_main_cf_mode: '0644'
+
+_pf_service_name:
+  default: postfix
+
+pf_service_name: "{{ _pf_service_name[ansible_distribution ~ '-' ~ ansible_distribution_major_version] |
+              default(_pf_service_name[ansible_distribution]) | default(_pf_service_name['default']) }}"
+
+_pf_packages:
+  default: ['postfix']
+  CentOS: ['postfix', 'cyrus-sasl', 'cyrus-sasl-plain']
+  Fedora: ['postfix', 'cyrus-sasl', 'cyrus-sasl-plain']
+  RedHat: ['postfix', 'cyrus-sasl', 'cyrus-sasl-plain']
+  Ubuntu: ['postfix', 'libsasl2-modules']
+
+pf_packages: "{{ _pf_packages[ansible_distribution ~ '-' ~ ansible_distribution_major_version] |
+             default(_pf_packages[ansible_distribution]) | default(_pf_packages['default']) }}"
+
+_pf_conflicting:
+  default: ['sendmail']
+
+pf_conflicting: "{{ _pf_conflicting[ansible_distribution ~ '-' ~ ansible_distribution_major_version] |
+                default(_pf_conflicting[ansible_distribution]) | default(_pf_conflicting['default']) }}"
+
+# The relayhost parameter specifies the default host to send mail to
+# when no entry is matched in the optional transport(5) table. When
+# no relayhost is given, mail is routed directly to the destination.
+# Default values are just to prevent error if these variables do not exist
+pf_relayhost: "[{{ pf_smtp_server | default('none') }}]:{{ pf_smtp_server_port | default(50000) }}"
+
+# Valid values for pf_smtp_sasl_security_options
+pf_smtp_sasl_security_options_vv: ['noplaintext', 'noactive', 'nodictionary', 'noanonymous', 'mutual_auth']
+
+# Valid values for pf_smtp_tls_mandatory_ciphers
+pf_smtp_tls_mandatory_ciphers_vv: ['export', 'low', 'medium', 'high', 'null']
+
+# Valid values for pf_smtp_tls_security_level
+pf_smtp_tls_security_level_vv: ['none', 'may', 'encrypt', 'dane', 'dane-only', 'fingerprint', 'verify', 'secure']
+
+# Valid values for pf_inet_protocols
+pf_inet_protocols_vv: ['all', 'ipv4', 'ipv6']
+
+# Map variable name used as input with actual postfix parameter
+pf_variable_map:
+  pf_inet_interfaces: inet_interfaces
+  pf_email_address: email_address
+  pf_email_password: email_password
+  pf_smtp_server: smtp_server
+  pf_smtp_server_port: smtp_server_port
+  pf_smtp_sasl_auth_enable: smtp_sasl_auth_enable
+  pf_smtp_sasl_security_options: smtp_sasl_security_options
+  pf_smtp_sasl_password_maps: smtp_sasl_password_maps
+  pf_smtp_use_tls: smtp_use_tls
+  pf_smtp_tls_security_level: smtp_tls_security_level
+  pf_smtp_tls_mandatory_ciphers: smtp_tls_mandatory_ciphers
+  pf_smtp_tls_capath: smtp_tls_CApath
+  pf_disable_vrfy_command: disable_vrfy_command
+  pf_mynetworks: mynetworks
+  pf_smtpd_helo_required: smtpd_helo_required
+  pf_smtpd_helo_restrictions: smtpd_helo_restrictions
+  pf_smtpd_tls_loglevel: smtpd_tls_loglevel
+  pf_smtp_tls_loglevel: smtp_tls_loglevel
+  pf_smtpd_recipient_restrictions: smtpd_recipient_restrictions
+  pf_strict_rfc821_envelopes: strict_rfc821_envelopes
+  pf_smtpd_delay_reject: smtpd_delay_reject
+  pf_smtpd_data_restrictions: smtpd_data_restrictions
+  pf_inet_protocols: inet_protocols

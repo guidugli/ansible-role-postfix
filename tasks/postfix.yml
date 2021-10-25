@@ -1,0 +1,132 @@
+---
+
+- name: Ensure postfix is installed
+  package:
+    name: "{{ pf_packages }}"
+    update_cache: yes
+    state: present
+
+- name: Remove conflicting packages
+  package:
+    name: "{{ pf_conflicting }}"
+    state: absent
+
+- name: Ensure service is enabled
+  service:
+    name: "{{ pf_service_name }}"
+    enabled: yes
+
+- name: Set postfix options for string/int variables
+  lineinfile:
+    path: "{{ pf_main_cf_path }}"
+    regexp: '^{{ pf_variable_map[item] }}\s*='
+    line: '{{ pf_variable_map[item] }} = {{ vars[item] }}'
+    insertafter: '#{{ pf_variable_map[item] }}\s*='
+    owner: "{{ pf_main_cf_owner }}"
+    group: "{{ pf_main_cf_group }}"
+    mode: "{{ pf_main_cf_mode }}"
+    backup: yes
+  when: vars[item] is defined
+  notify: restart postfix
+  loop:
+    - pf_inet_interfaces
+    - pf_smtp_tls_security_level
+    - pf_smtp_tls_mandatory_ciphers
+    - pf_smtp_tls_capath
+    - pf_smtp_tls_cafile
+    - pf_inet_protocols
+    - pf_mynetworks
+    - pf_smtpd_tls_loglevel
+    - pf_smtp_tls_loglevel
+
+- name: Set relayhost
+  lineinfile:
+    path: "{{ pf_main_cf_path }}"
+    regexp: '^relayhost\s*='
+    line: "relayhost = {{ pf_relayhost }}"
+    insertafter: '#relayhost\s*='
+    owner: "{{ pf_main_cf_owner }}"
+    group: "{{ pf_main_cf_group }}"
+    mode: "{{ pf_main_cf_mode }}"
+    backup: yes
+  when:
+    - pf_smtp_server is defined
+    - pf_smtp_server_port is defined
+  notify: restart postfix
+
+- name: Set postfix options for yes/no variables
+  vars:
+    str: "{{ 'yes' if vars[item] else 'no' }}"
+  lineinfile:
+    path: "{{ pf_main_cf_path }}"
+    regexp: '^{{ pf_variable_map[item] }}\s*='
+    line: '{{ pf_variable_map[item] }} = {{ str }}'
+    insertafter: '#{{ pf_variable_map[item] }}\s*='
+    owner: "{{ pf_main_cf_owner }}"
+    group: "{{ pf_main_cf_group }}"
+    mode: "{{ pf_main_cf_mode }}"
+    backup: yes
+  when: vars[item] is defined
+  loop:
+    - pf_smtp_sasl_auth_enable
+    - pf_smtp_use_tls
+    - pf_disable_vrfy_command
+    - pf_smtpd_helo_required
+    - pf_strict_rfc821_envelopes
+  notify: restart postfix
+
+- name: Set postfix options for list variables
+  vars:
+    str: "{{ vars[item] | join(', ') }}"
+  lineinfile:
+    path: "{{ pf_main_cf_path }}"
+    regexp: '^{{ pf_variable_map[item] }}\s*='
+    line: '{{ pf_variable_map[item] }} = {{ str }}'
+    insertafter: '#{{ pf_variable_map[item] }}\s*='
+    owner: "{{ pf_main_cf_owner }}"
+    group: "{{ pf_main_cf_group }}"
+    mode: "{{ pf_main_cf_mode }}"
+    backup: yes
+  when: vars[item] is defined
+  loop:
+    - pf_smtp_sasl_security_options
+    - pf_smtpd_helo_restrictions
+    - pf_smtpd_recipient_restrictions
+    - pf_smtpd_data_restrictions
+  notify: restart postfix
+
+- name: Set postfix smtp_sasl_password_maps option
+  lineinfile:
+    path: "{{ pf_main_cf_path }}"
+    regexp: '^smtp_sasl_password_maps\s*='
+    line: 'smtp_sasl_password_maps = hash:{{ pf_smtp_sasl_password_maps }}'
+    insertafter: '#smtp_sasl_password_maps\s*='
+    owner: "{{ pf_main_cf_owner }}"
+    group: "{{ pf_main_cf_group }}"
+    mode: "{{ pf_main_cf_mode }}"
+    backup: yes
+  when: pf_smtp_sasl_password_maps is defined
+  notify: restart postfix
+
+- name: Create/update password map file
+  lineinfile:
+    path: "{{ pf_smtp_sasl_password_maps }}"
+    regexp: '^{{ pf_relayhost }}\s+{{ pf_email_address }}:'
+    line: '{{ pf_relayhost }} {{ pf_email_address }}:{{ pf_email_password }}'
+    owner: "{{ pf_main_cf_owner }}"
+    group: "{{ pf_main_cf_group }}"
+    mode: '0600'
+    create: yes
+    backup: yes
+  when:
+    - pf_email_address is defined
+    - pf_email_password is defined
+    - pf_smtp_server is defined
+    - pf_smtp_server_port is defined
+  notify:
+    - run postmap
+    - restart postfix
+
+- name: Validate configuration
+  command: postfix check
+  changed_when: false

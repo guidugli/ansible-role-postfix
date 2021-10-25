@@ -1,0 +1,9 @@
+---
+- name: Converge
+  hosts: all
+  pre_tasks:
+    - name: import test vars
+      include_vars: vars/test.yml
+
+  roles:
+    - name: guidugli.postfix

@@ -1,0 +1,10 @@
+---
+# handlers file for postfix
+
+- name: run postmap
+  command: "postmap {{ pf_smtp_sasl_password_maps }}"
+
+- name: restart postfix
+  service:
+    name: "{{ pf_service_name }}"
+    state: restarted

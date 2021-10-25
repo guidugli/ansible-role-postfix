@@ -1,0 +1,105 @@
+---
+# defaults file for postfix
+
+# Interface addresses that can receive email
+pf_inet_interfaces: loopback-only
+
+# Variables to setup relayhost and password maps file
+pf_email_address: yourgmailaccount@gmail.com
+pf_email_password: gmail_app_password
+pf_smtp_server: smtp.gmail.com
+pf_smtp_server_port: 587
+
+# Enable SASL authentication
+pf_smtp_sasl_auth_enable: yes
+
+# Disallow any methods that do allow anonymous authentication
+pf_smtp_sasl_security_options:
+  - noanonymous
+#  - noplaintext
+
+# Define the sasl_passwd file location
+pf_smtp_sasl_password_maps: /etc/postfix/sasl/sasl_passwd
+
+# Enable STARTTLS encryption
+pf_smtp_use_tls: yes
+
+# The default SMTP TLS security level for the Postfix SMTP client;
+# when a non-empty value is specified, this overrides the obsolete
+# parameters smtp_use_tls, smtp_enforce_tls, and smtp_tls_enforce_peername.
+pf_smtp_tls_security_level: verify
+
+# http://www.postfix.org/postconf.5.html#smtp_tls_mandatory_ciphers
+pf_smtp_tls_mandatory_ciphers: high
+
+# Location of CA certificates
+#pf_smtp_tls_cafile: /etc/ssl/certs/ca-certificates.crt
+pf_smtp_tls_capath: /etc/ssl/certs
+
+# The VRFY command is short for ‘verify’. It can be used to see if an email address
+# is valid on the mail server. While this is great for troubleshooting, it also allows
+# others to make educated guesses if an account exists and deliver possibly spam.
+# The VRFY command is not normally not needed for delivery between two mail servers
+pf_disable_vrfy_command: yes
+
+# Which network can use this relay server
+pf_mynetworks: "127.0.0.0/8 [::ffff:127.0.0.0]/104 [::1]/128"
+#pf_mynetworks: "127.0.0.0/8"
+
+# Send HELO command
+pf_smtpd_helo_required: yes
+
+pf_smtpd_helo_restrictions:
+  - permit_mynetworks
+  - reject_non_fqdn_helo_hostname
+  - reject_invalid_helo_hostname
+
+# server side log level
+# 0 	Disable logging of TLS activity.
+# 1 	Log only a summary message on TLS handshake completion — no logging of client certificate trust-chain
+#    verification errors if client certificate verification is not required. Log the summary message, peer
+#    certificate summary information and unconditionally log trust-chain verification errors.
+# 2 	Also log levels during TLS negotiation.
+# 3 	Also log hexadecimal and ASCII dump of TLS negotiation process.
+# 4 	Also log hexadecimal and ASCII dump of complete transmission after STARTTLS.
+pf_smtpd_tls_loglevel: 1
+
+# client side log level
+# 0 	Disable logging of TLS activity.
+# 1 	Log only a summary message on TLS handshake completion — no logging of remote SMTP server certificate
+#    trust-chain verification errors if server certificate verification is not required. Log the summary
+#    message and unconditionally log trust-chain verification errors.
+# 2 	Also log levels during TLS negotiation.
+# 3 	Also log hexadecimal and ASCII dump of TLS negotiation process.
+# 4 	Also log hexadecimal and ASCII dump of complete transmission after STARTTLS.
+pf_smtp_tls_loglevel: 1
+
+# http://www.postfix.org/postconf.5.html#smtpd_recipient_restrictions
+pf_smtpd_recipient_restrictions:
+  - reject_invalid_hostname
+  - reject_non_fqdn_hostname
+  - reject_non_fqdn_sender
+  - reject_unauth_destination
+  - reject_unknown_sender_domain
+  - reject_rbl_client bl.spamcop.net
+  - reject_rbl_clienti dnsbl.sorbs.net
+
+
+# Require that addresses received in SMTP MAIL FROM and RCPT TO commands are
+# enclosed with <>, and that those addresses do not contain RFC 822 style
+# comments or phrases. This stops mail from poorly written software.
+# By default, the Postfix SMTP server accepts RFC 822 syntax in MAIL FROM and
+# RCPT TO addresses.
+pf_strict_rfc821_envelopes: yes
+
+# http://www.postfix.org/postconf.5.html#smtpd_delay_reject
+pf_smtpd_delay_reject: yes
+
+# http://www.postfix.org/postconf.5.html#smtpd_data_restrictions
+pf_smtpd_data_restrictions:
+  - reject_unauth_pipelining
+
+# The Internet protocols Postfix will attempt to use when making or accepting connections.
+# Specify one or more of "ipv4" or "ipv6", separated by whitespace or commas. The form "all"
+# is equivalent to "ipv4, ipv6" or "ipv4", depending on whether the operating system implements IPv6.
+pf_inet_protocols: ipv4
