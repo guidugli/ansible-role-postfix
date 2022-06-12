@@ -1,23 +1,23 @@
 ---
 
 - name: Ensure postfix is installed
-  package:
+  ansible.builtin.package:
     name: "{{ pf_packages }}"
     update_cache: yes
     state: present
 
 - name: Remove conflicting packages
-  package:
+  ansible.builtin.package:
     name: "{{ pf_conflicting }}"
     state: absent
 
 - name: Ensure service is enabled
-  service:
+  ansible.builtin.service:
     name: "{{ pf_service_name }}"
     enabled: yes
 
 - name: Set postfix options for string/int variables
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: "{{ pf_main_cf_path }}"
     regexp: '^{{ pf_variable_map[item] }}\s*='
     line: '{{ pf_variable_map[item] }} = {{ vars[item] }}'
@@ -40,7 +40,7 @@
     - pf_smtp_tls_loglevel
 
 - name: Set relayhost
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: "{{ pf_main_cf_path }}"
     regexp: '^relayhost\s*='
     line: "relayhost = {{ pf_relayhost }}"
@@ -57,7 +57,7 @@
 - name: Set postfix options for yes/no variables
   vars:
     str: "{{ 'yes' if vars[item] else 'no' }}"
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: "{{ pf_main_cf_path }}"
     regexp: '^{{ pf_variable_map[item] }}\s*='
     line: '{{ pf_variable_map[item] }} = {{ str }}'
@@ -78,7 +78,7 @@
 - name: Set postfix options for list variables
   vars:
     str: "{{ vars[item] | join(', ') }}"
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: "{{ pf_main_cf_path }}"
     regexp: '^{{ pf_variable_map[item] }}\s*='
     line: '{{ pf_variable_map[item] }} = {{ str }}'
@@ -96,7 +96,7 @@
   notify: restart postfix
 
 - name: Set postfix smtp_sasl_password_maps option
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: "{{ pf_main_cf_path }}"
     regexp: '^smtp_sasl_password_maps\s*='
     line: 'smtp_sasl_password_maps = hash:{{ pf_smtp_sasl_password_maps }}'
@@ -109,7 +109,7 @@
   notify: restart postfix
 
 - name: Create/update password map file
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: "{{ pf_smtp_sasl_password_maps }}"
     regexp: '^{{ pf_relayhost }}\s+{{ pf_email_address }}:'
     line: '{{ pf_relayhost }} {{ pf_email_address }}:{{ pf_email_password }}'
@@ -128,5 +128,5 @@
     - restart postfix
 
 - name: Validate configuration
-  command: postfix check
+  ansible.builtin.command: postfix check
   changed_when: false

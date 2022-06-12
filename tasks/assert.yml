@@ -1,7 +1,7 @@
 ---
 
 - name: Check boolean values
-  assert:
+  ansible.builtin.assert:
     that:
       - vars[item] | type_debug == 'bool'
     quiet: yes
@@ -17,7 +17,7 @@
 - name: Check string values
   vars:
     litem: "{{ lookup('vars', item) }}"
-  assert:
+  ansible.builtin.assert:
     that:
       - litem is string
       - litem | length > 0
@@ -38,7 +38,7 @@
 - name: Check if lists are ok
   vars:
     litem: "{{ lookup('vars', item) }}"
-  assert:
+  ansible.builtin.assert:
     that:
       - litem is iterable
       - litem | length > 0
@@ -53,7 +53,7 @@
 # Another funny case: now instead of AnsibleUnicode
 # the returned type is str when in a loop
 - name: Check pf_smtp_sasl_security_options values
-  assert:
+  ansible.builtin.assert:
     that:
       - item is string
       - item in pf_smtp_sasl_security_options_vv
@@ -62,7 +62,7 @@
   loop: "{{ pf_smtp_sasl_security_options }}"
 
 - name: Check pf_smtp_tls_security_level values
-  assert:
+  ansible.builtin.assert:
     that:
       - pf_smtp_tls_security_level is string
       - pf_smtp_tls_security_level in pf_smtp_tls_security_level_vv
@@ -70,7 +70,7 @@
   when: pf_smtp_tls_security_level is defined
 
 - name: Check pf_smtp_tls_mandatory_ciphers values
-  assert:
+  ansible.builtin.assert:
     that:
       - pf_smtp_tls_mandatory_ciphers is string
       - pf_smtp_tls_mandatory_ciphers in pf_smtp_tls_mandatory_ciphers_vv
@@ -78,7 +78,7 @@
   when: pf_smtp_tls_mandatory_ciphers is defined
 
 - name: Check pf_inet_protocols values
-  assert:
+  ansible.builtin.assert:
     that:
       - pf_inet_protocols is string
       - pf_inet_protocols in pf_inet_protocols_vv
@@ -88,7 +88,7 @@
 - name: Check integer value variables
   vars:
     litem: "{{ lookup('vars', item) }}"
-  assert:
+  ansible.builtin.assert:
     that:
       - litem | int(-1) >= 0
     quiet: yes
@@ -102,7 +102,7 @@
   vars:
     pathre: '^(?:[\/])$|^(?:[\/][a-zA-Z0-9_.-]+)+[\/]?$'
     litem: "{{ lookup('vars', item) }}"
-  assert:
+  ansible.builtin.assert:
     that:
       - litem is string
       - litem | length > 0
