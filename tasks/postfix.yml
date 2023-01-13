@@ -27,7 +27,7 @@
     mode: "{{ pf_main_cf_mode }}"
     backup: yes
   when: vars[item] is defined
-  notify: restart postfix
+  notify: Restart postfix
   loop:
     - pf_inet_interfaces
     - pf_smtp_tls_security_level
@@ -52,7 +52,7 @@
   when:
     - pf_smtp_server is defined
     - pf_smtp_server_port is defined
-  notify: restart postfix
+  notify: Restart postfix
 
 - name: Set postfix options for yes/no variables
   vars:
@@ -73,7 +73,7 @@
     - pf_disable_vrfy_command
     - pf_smtpd_helo_required
     - pf_strict_rfc821_envelopes
-  notify: restart postfix
+  notify: Restart postfix
 
 - name: Set postfix options for list variables
   vars:
@@ -93,7 +93,7 @@
     - pf_smtpd_helo_restrictions
     - pf_smtpd_recipient_restrictions
     - pf_smtpd_data_restrictions
-  notify: restart postfix
+  notify: Restart postfix
 
 - name: Set postfix smtp_sasl_password_maps option
   ansible.builtin.lineinfile:
@@ -106,7 +106,7 @@
     mode: "{{ pf_main_cf_mode }}"
     backup: yes
   when: pf_smtp_sasl_password_maps is defined
-  notify: restart postfix
+  notify: Restart postfix
 
 - name: Create/update password map file
   ansible.builtin.lineinfile:
@@ -124,8 +124,8 @@
     - pf_smtp_server is defined
     - pf_smtp_server_port is defined
   notify:
-    - run postmap
-    - restart postfix
+    - Run postmap
+    - Restart postfix
 
 - name: Validate configuration
   ansible.builtin.command: postfix check

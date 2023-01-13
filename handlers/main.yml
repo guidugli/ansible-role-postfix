@@ -1,10 +1,10 @@
 ---
 # handlers file for postfix
 
-- name: run postmap
+- name: Run postmap
   ansible.builtin.command: "postmap {{ pf_smtp_sasl_password_maps }}"
 
-- name: restart postfix
+- name: Restart postfix
   ansible.builtin.service:
     name: "{{ pf_service_name }}"
     state: restarted
