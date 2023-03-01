@@ -2,7 +2,7 @@
 - name: Converge
   hosts: all
   pre_tasks:
-    - name: import test vars
+    - name: Import test vars
       ansible.builtin.include_vars: vars/test.yml
 
   roles:
