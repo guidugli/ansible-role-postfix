@@ -17,6 +17,7 @@ _pf_packages:
   CentOS: ['postfix', 'cyrus-sasl', 'cyrus-sasl-plain']
   Fedora: ['postfix', 'cyrus-sasl', 'cyrus-sasl-plain']
   RedHat: ['postfix', 'cyrus-sasl', 'cyrus-sasl-plain']
+  Rocky: ['postfix', 'cyrus-sasl', 'cyrus-sasl-plain']
   Ubuntu: ['postfix', 'libsasl2-modules']
 
 pf_packages: "{{ _pf_packages[ansible_distribution ~ '-' ~ ansible_distribution_major_version] |
