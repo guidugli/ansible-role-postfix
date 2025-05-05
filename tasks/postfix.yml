@@ -1,15 +1,21 @@
 ---
 
+- name: Gather the package facts
+  ansible.builtin.package_facts:
+    manager: auto
+
+# needed to add the when clause because on F42 it was removing postfix. Bug?
+- name: Remove conflicting packages
+  ansible.builtin.package:
+    name: "{{ pf_conflicting }}"
+    state: absent
+  when: "'sendmail' in ansible_facts.packages"
+
 - name: Ensure postfix is installed
   ansible.builtin.package:
     name: "{{ pf_packages }}"
     update_cache: yes
     state: present
-
-- name: Remove conflicting packages
-  ansible.builtin.package:
-    name: "{{ pf_conflicting }}"
-    state: absent
 
 - name: Ensure service is enabled
   ansible.builtin.service:
