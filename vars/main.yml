@@ -1,6 +1,8 @@
 ---
 # vars file for postfix
 
+pf_aliases_path: /etc/aliases
+
 pf_main_cf_path: /etc/postfix/main.cf
 pf_main_cf_owner: root
 pf_main_cf_group: root

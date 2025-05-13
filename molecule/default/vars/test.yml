@@ -28,7 +28,7 @@ pf_smtp_sasl_security_options:
 # Define the sasl_passwd file location
 pf_smtp_sasl_password_maps: /etc/postfix/sasl/sasl_passwd
 
-# Optional lookup table with the SASL login names that own the envelope sender (MAIL FROM) addresses. 
+# Optional lookup table with the SASL login names that own the envelope sender (MAIL FROM) addresses.
 pf_smtpd_sender_login_maps: "hash:/etc/postfix/smtpd_sender_login_maps"
 
 # Enable STARTTLS encryption
@@ -113,3 +113,9 @@ pf_smtpd_data_restrictions:
 # Specify one or more of "ipv4" or "ipv6", separated by whitespace or commas. The form "all"
 # is equivalent to "ipv4, ipv6" or "ipv4", depending on whether the operating system implements IPv6.
 pf_inet_protocols: ipv4
+
+pf_add_aliases:
+  - { from: root, to: xxx@x.com }
+
+pf_remove_aliases:
+  - abc

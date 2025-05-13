@@ -9,3 +9,7 @@
   ansible.builtin.service:
     name: "{{ pf_service_name }}"
     state: restarted
+
+- name: Run newaliases
+  ansible.builtin.command: "newaliases"
+  changed_when: true

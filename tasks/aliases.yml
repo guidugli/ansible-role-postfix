@@ -1,0 +1,28 @@
+---
+
+- name: Remove aliases
+  ansible.builtin.lineinfile:
+    path: "{{ pf_aliases_path }}"
+    regexp: '^{{ item }}:'
+    owner: "{{ pf_main_cf_owner }}"
+    group: "{{ pf_main_cf_group }}"
+    mode: '0600'
+    backup: yes
+    state: absent
+  loop: "{{ pf_remove_aliases | default([], true) }}"
+  notify:
+    - Run newaliases
+
+- name: Remove aliases
+  ansible.builtin.lineinfile:
+    path: "{{ pf_aliases_path }}"
+    regexp: '^{{ item.from }}:'
+    line: "{{ item.from }}:   {{ item.to }}"
+    owner: "{{ pf_main_cf_owner }}"
+    group: "{{ pf_main_cf_group }}"
+    mode: '0600'
+    backup: yes
+    state: present
+  loop: "{{ pf_add_aliases | default([], true) }}"
+  notify:
+    - Run newaliases

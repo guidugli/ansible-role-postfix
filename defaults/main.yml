@@ -34,10 +34,10 @@ pf_inet_interfaces: loopback-only
 # Define the sasl_passwd file location
 #pf_smtp_sasl_password_maps: "hash:/etc/postfix/sasl_passwd"
 
-# Optional lookup table with the SASL login names that own the envelope sender (MAIL FROM) addresses. 
+# Optional lookup table with the SASL login names that own the envelope sender (MAIL FROM) addresses.
 #pf_smtpd_sender_login_maps: "hash:/etc/postfix/smtpd_sender_login_maps"
 
-# Enable STARTTLS encryption
+# Enable STARTTLS encryption (deprecated, use pf_smtp_tls_security_level instead)
 #pf_smtp_use_tls: yes
 
 # The default SMTP TLS security level for the Postfix SMTP client;
@@ -118,3 +118,11 @@ pf_inet_interfaces: loopback-only
 # Specify one or more of "ipv4" or "ipv6", separated by whitespace or commas. The form "all"
 # is equivalent to "ipv4, ipv6" or "ipv4", depending on whether the operating system implements IPv6.
 #pf_inet_protocols: ipv4
+
+# Add/remove entries from /etc/aliases
+#pf_add_aliases:
+#  - { from: X, to: Y }
+#  - { from: W, to: Z }
+#
+#pf_remove_aliases:
+#  - X

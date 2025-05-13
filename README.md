@@ -27,6 +27,12 @@ Interface addresses that can receive email. Be careful changing this value as it
 
 Variables to setup relayhost and password maps file, i.e., information needed to relay emails to other systems. In the example above, just change username and password in order to send emails via gmail.
 
+    #pf_mydomain: mydomain.com
+
+The mydomain parameter specifies the local internet domain name.
+The default is to use $myhostname minus the first component.
+$mydomain is used as a default value for many other configuration parameters.
+
     #pf_smtp_sasl_auth_enable: yes
 
 Enable SASL authentication
@@ -42,7 +48,7 @@ Define the sasl_passwd file location
 
     #pf_smtp_use_tls: yes
 
-Enable STARTTLS encryption
+Enable STARTTLS encryption. This option is deprecated, use pf_smtp_tls_security_level instead.
 
     #pf_smtp_tls_security_level: verify
 
@@ -155,6 +161,17 @@ Packages that conflics with Postfix and that will be removed by this role.
 
 The relayhost parameter specifies the default host to send mail to when no entry is matched in the optional transport(5) table. When no relayhost is given, mail is routed directly to the destination. Default values are just to prevent error if these variables do not exist.
 
+# Add/remove entries from /etc/aliases
+    #pf_add_aliases:
+    #  - { from: X, to: Y }
+    #  - { from: W, to: Z }
+
+Add/modify aliases.
+
+    #pf_remove_aliases:
+    #  - X
+
+Remove aliases.
 
 Dependencies
 ------------
