@@ -110,6 +110,5 @@
     quiet: yes
   when: vars[item] is defined
   loop:
-    - pf_smtp_sasl_password_maps
     - pf_smtp_tls_capath
     - pf_smtp_tls_cafile
