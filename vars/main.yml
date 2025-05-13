@@ -63,6 +63,7 @@ pf_variable_map:
   pf_smtp_tls_capath: smtp_tls_CApath
   pf_disable_vrfy_command: disable_vrfy_command
   pf_mynetworks: mynetworks
+  pf_mydomain: mydomain
   pf_smtpd_helo_required: smtpd_helo_required
   pf_smtpd_helo_restrictions: smtpd_helo_restrictions
   pf_smtpd_tls_loglevel: smtpd_tls_loglevel
@@ -72,3 +73,4 @@ pf_variable_map:
   pf_smtpd_delay_reject: smtpd_delay_reject
   pf_smtpd_data_restrictions: smtpd_data_restrictions
   pf_inet_protocols: inet_protocols
+  pf_smtpd_sender_login_maps: smtpd_sender_login_maps

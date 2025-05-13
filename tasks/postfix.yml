@@ -42,8 +42,11 @@
     - pf_smtp_tls_cafile
     - pf_inet_protocols
     - pf_mynetworks
+    - pf_mydomain
     - pf_smtpd_tls_loglevel
     - pf_smtp_tls_loglevel
+    - pf_smtp_sasl_password_maps
+    - pf_smtpd_sender_login_maps
 
 - name: Set relayhost
   ansible.builtin.lineinfile:
@@ -99,19 +102,6 @@
     - pf_smtpd_helo_restrictions
     - pf_smtpd_recipient_restrictions
     - pf_smtpd_data_restrictions
-  notify: Restart postfix
-
-- name: Set postfix smtp_sasl_password_maps option
-  ansible.builtin.lineinfile:
-    path: "{{ pf_main_cf_path }}"
-    regexp: '^smtp_sasl_password_maps\s*='
-    line: 'smtp_sasl_password_maps = hash:{{ pf_smtp_sasl_password_maps }}'
-    insertafter: '#smtp_sasl_password_maps\s*='
-    owner: "{{ pf_main_cf_owner }}"
-    group: "{{ pf_main_cf_group }}"
-    mode: "{{ pf_main_cf_mode }}"
-    backup: yes
-  when: pf_smtp_sasl_password_maps is defined
   notify: Restart postfix
 
 - name: Create/update password map file

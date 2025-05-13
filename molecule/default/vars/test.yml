@@ -10,6 +10,13 @@ pf_email_password: gmail_app_password
 pf_smtp_server: smtp.gmail.com
 pf_smtp_server_port: 587
 
+# The mydomain parameter specifies the local internet domain name.
+# The default is to use $myhostname minus the first component.
+# $mydomain is used as a default value for many other configuration
+# parameters.
+#
+pf_mydomain: mydomain.com
+
 # Enable SASL authentication
 pf_smtp_sasl_auth_enable: yes
 
@@ -20,6 +27,9 @@ pf_smtp_sasl_security_options:
 
 # Define the sasl_passwd file location
 pf_smtp_sasl_password_maps: /etc/postfix/sasl/sasl_passwd
+
+# Optional lookup table with the SASL login names that own the envelope sender (MAIL FROM) addresses. 
+pf_smtpd_sender_login_maps: "hash:/etc/postfix/smtpd_sender_login_maps"
 
 # Enable STARTTLS encryption
 pf_smtp_use_tls: yes
