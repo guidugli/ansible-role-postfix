@@ -13,7 +13,7 @@
   notify:
     - Run newaliases
 
-- name: Remove aliases
+- name: Add/Modify aliases
   ansible.builtin.lineinfile:
     path: "{{ pf_aliases_path }}"
     regexp: '^{{ item.from }}:'
