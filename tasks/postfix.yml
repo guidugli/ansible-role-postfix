@@ -104,9 +104,11 @@
     - pf_smtpd_data_restrictions
   notify: Restart postfix
 
-- name: Create/update password map file
+- name: "Create/update password map file ({{ path_without_prefix }})"
+  vars:
+    path_without_prefix: "{{ pf_smtp_sasl_password_maps | regex_replace('^.*?:', '') }}"
   ansible.builtin.lineinfile:
-    path: "{{ pf_smtp_sasl_password_maps }}"
+    path: "{{ path_without_prefix }}"
     regexp: '^{{ pf_relayhost }}\s+{{ pf_email_address }}:'
     line: '{{ pf_relayhost }} {{ pf_email_address }}:{{ pf_email_password }}'
     owner: "{{ pf_main_cf_owner }}"

@@ -26,7 +26,7 @@ pf_smtp_sasl_security_options:
 #  - noplaintext
 
 # Define the sasl_passwd file location
-pf_smtp_sasl_password_maps: /etc/postfix/sasl/sasl_passwd
+pf_smtp_sasl_password_maps: "hash:/etc/postfix/sasl/sasl_passwd"
 
 # Optional lookup table with the SASL login names that own the envelope sender (MAIL FROM) addresses.
 pf_smtpd_sender_login_maps: "hash:/etc/postfix/smtpd_sender_login_maps"
