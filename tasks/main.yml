@@ -1,16 +1,23 @@
 ---
 # tasks file for postfix
 
-- name: Execute role tasks
-  block:
+- name: Include variable validation tasks
+  ansible.builtin.include_tasks: assert.yml
+  tags:
+    - postfix
+    - validate
 
-    - name: Include assert.yml
-      ansible.builtin.include_tasks: assert.yml
-    
-    - name: Include postfix.yml
-      ansible.builtin.include_tasks: postfix.yml
-    
-    - name: Include aliases.yml
-      ansible.builtin.include_tasks: aliases.yml
+- name: Include Postfix installation and configuration tasks
+  ansible.builtin.include_tasks: postfix.yml
+  tags:
+    - postfix
+    - install
+    - config
+    - service
+    - validate
 
-  become: yes
+- name: Include aliases management tasks
+  ansible.builtin.include_tasks: aliases.yml
+  tags:
+    - postfix
+    - config

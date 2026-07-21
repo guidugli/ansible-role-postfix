@@ -1,204 +1,99 @@
-Ansible Role: postfix
-=========
+[![CI](https://github.com/guidugli/ansible-role-postfix/actions/workflows/CI.yml/badge.svg)](https://github.com/guidugli/ansible-role-postfix/actions/workflows/CI.yml)
+[![Release](https://img.shields.io/github/v/tag/guidugli/ansible-role-postfix?sort=semver)](https://github.com/guidugli/ansible-role-postfix/tags)
+[![Galaxy](https://img.shields.io/badge/galaxy-guidugli.postfix-blue.svg)](https://galaxy.ansible.com/ui/standalone/roles/guidugli/postfix/)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-An Ansible Role that install and configure postfix on RHEL/CentOS, Fedora and Debian/Ubuntu. This role is not suited for email servers but other Linux systems that uses postfix to relay emails.
+# Ansible Role: postfix
 
-Requirements
-------------
+Installs and configures Postfix as a local relay client. The role is intended for Linux hosts that need to relay mail through an upstream SMTP service, not for operating a public inbound mail server. It manages selected `main.cf` options, optional SASL password maps, optional aliases, and validates the resulting Postfix configuration.
 
-No requirements.
+## Requirements
 
-Role Variables
---------------
+- Ansible Core 2.17 for local development, as pinned in `requirements-dev.txt`.
+- Supported test platforms are defined by `molecule/shared/vars.yml` and rendered into the default and systemd Molecule scenarios.
+- The caller must provide privilege escalation externally when the target host requires root access for package installation or files under `/etc`.
+- `containers.podman` collection `>=1.10.0` is required for Molecule scenarios.
 
-**Available variables are listed below, along with default values (see defaults/main.yml):**
+## Variables
 
-> **NOTE**: if a variable is not defined (commented) the role will not change its original value on the system.
+Only `pf_inet_interfaces` is enabled by default. Optional variables may be supplied by inventory, group vars, host vars, or play vars. When an optional variable is not defined, the role leaves the corresponding Postfix setting untouched.
 
+| Variable | Type | Default | Explanation |
+| --- | --- | --- | --- |
+| `pf_inet_interfaces` | string | `loopback-only` | Interfaces on which Postfix receives mail. The default keeps the service local-only. |
+| `pf_email_address` | string | undefined | SMTP account or sender identity used in the SASL password map. |
+| `pf_email_password` | string | undefined | SMTP password or app password written to the SASL password map. Mark this value secret in your inventory. |
+| `pf_smtp_server` | string | undefined | Upstream SMTP relay host. |
+| `pf_smtp_server_port` | integer | undefined | Upstream SMTP relay port, commonly `587` for submission. |
+| `pf_mydomain` | string | undefined | Value for Postfix `mydomain`. |
+| `pf_smtp_sasl_auth_enable` | boolean | undefined | Writes `smtp_sasl_auth_enable = yes/no`. |
+| `pf_smtp_sasl_security_options` | list(string) | undefined | Writes `smtp_sasl_security_options`, for example `noanonymous`. |
+| `pf_smtp_sasl_password_maps` | string | undefined | Lookup table for the credentials file, for example `hash:/etc/postfix/sasl/sasl_passwd`. |
+| `pf_smtpd_sender_login_maps` | string | undefined | Optional map of SASL login names to permitted envelope senders. |
+| `pf_smtp_tls_security_level` | string | undefined | TLS policy for outbound SMTP, such as `may`, `encrypt`, or `verify`. |
+| `pf_smtp_tls_mandatory_ciphers` | string | undefined | Mandatory TLS cipher grade, such as `high`. |
+| `pf_smtp_tls_cafile` | string | undefined | CA certificate file path. |
+| `pf_smtp_tls_capath` | string | undefined | CA certificate directory path. |
+| `pf_disable_vrfy_command` | boolean | undefined | Writes `disable_vrfy_command = yes/no`. |
+| `pf_mynetworks` | string | undefined | Networks permitted to relay through the host. |
+| `pf_smtpd_helo_required` | boolean | undefined | Requires SMTP clients to send HELO/EHLO when enabled. |
+| `pf_smtpd_helo_restrictions` | list(string) | undefined | HELO restrictions written as a comma-separated Postfix value. |
+| `pf_smtpd_tls_loglevel` | integer | undefined | Server-side TLS log level. |
+| `pf_smtp_tls_loglevel` | integer | undefined | Client-side TLS log level. |
+| `pf_smtpd_recipient_restrictions` | list(string) | undefined | Recipient restrictions written as a comma-separated Postfix value. |
+| `pf_strict_rfc821_envelopes` | boolean | undefined | Enforces strict RFC 821 envelope syntax when enabled. |
+| `pf_smtpd_delay_reject` | boolean | undefined | Writes `smtpd_delay_reject = yes/no`. |
+| `pf_smtpd_data_restrictions` | list(string) | undefined | DATA restrictions written as a comma-separated Postfix value. |
+| `pf_inet_protocols` | string | undefined | Protocol family used by Postfix: `all`, `ipv4`, or `ipv6`. |
+| `pf_add_aliases` | list(dict) | undefined | Adds or updates `/etc/aliases` entries with `from` and `to` keys. |
+| `pf_remove_aliases` | list(string) | undefined | Removes matching aliases from `/etc/aliases`. |
+
+Internal variables in `vars/main.yml` define OS-specific package lists, service name, file ownership, validation choices, and variable-to-Postfix option mappings. They normally do not need to be overridden.
+
+## Example Playbook
+
+```yaml
+---
+- name: Configure local mail relay
+  hosts: linux
+  become: true
+  vars:
     pf_inet_interfaces: loopback-only
-
-Interface addresses that can receive email. Be careful changing this value as it can make is system vulnerable. Recommended to leave as loopback-only.
-
-
-    #pf_email_address: yourgmailaccount@gmail.com
-    #pf_email_password: gmail_app_password
-    #pf_smtp_server: smtp.gmail.com
-    #pf_smtp_server_port: 587
-
-Variables to setup relayhost and password maps file, i.e., information needed to relay emails to other systems. In the example above, just change username and password in order to send emails via gmail.
-
-    #pf_mydomain: mydomain.com
-
-The mydomain parameter specifies the local internet domain name.
-The default is to use $myhostname minus the first component.
-$mydomain is used as a default value for many other configuration parameters.
-
-    #pf_smtp_sasl_auth_enable: yes
-
-Enable SASL authentication
-
-    #pf_smtp_sasl_security_options:
-    #  - noanonymous
-
-Disallow any methods that do allow anonymous authentication
-
-    #pf_smtp_sasl_password_maps: /etc/postfix/sasl/sasl_passwd
-
-Define the sasl_passwd file location
-
-    #pf_smtp_use_tls: yes
-
-Enable STARTTLS encryption. This option is deprecated, use pf_smtp_tls_security_level instead.
-
-    #pf_smtp_tls_security_level: verify
-
-The default SMTP TLS security level for the Postfix SMTP client;
-when a non-empty value is specified, this overrides the obsolete parameters smtp_use_tls, smtp_enforce_tls, and smtp_tls_enforce_peername.
-
-    #pf_smtp_tls_mandatory_ciphers: high
-
-[Documentation about tls mandatory ciphers](http://www.postfix.org/postconf.5.html#smtp_tls_mandatory_ciphers)
-
-    #pf_smtp_tls_cafile: /etc/ssl/certs/ca-certificates.crt
-    #pf_smtp_tls_capath: /etc/ssl/certs
-
-Location of CA certificates
-
-    #pf_disable_vrfy_command: yes
-
-The VRFY command is short for ‘verify’. It can be used to see if an email address is valid on the mail server. While this is great for troubleshooting, it also allows others to make educated guesses if an account exists and deliver possibly spam.
-The VRFY command is not normally not needed for delivery between two mail servers
-
-    #pf_mynetworks: "127.0.0.0/8 [::ffff:127.0.0.0]/104 [::1]/128"
-
-Which network can use this relay server
-
-    #pf_smtpd_helo_required: yes
-
-Send HELO command
-
-    #pf_smtpd_helo_restrictions:
-    #  - permit_mynetworks
-    #  - reject_non_fqdn_helo_hostname
-    #  - reject_invalid_helo_hostname
-
-Optional restrictions that the Postfix SMTP server applies in the context of a client HELO command. 
-
-    #pf_smtpd_tls_loglevel: 1
-
-Server side log level:
-
-  - 0 	Disable logging of TLS activity.
-  - 1 	Log only a summary message on TLS handshake completion — no logging of client certificate trust-chain verification errors if client certificate verification is not required. Log the summary message, peer certificate summary information and unconditionally log trust-chain verification errors.
-  - 2 	Also log levels during TLS negotiation.
-  - 3 	Also log hexadecimal and ASCII dump of TLS negotiation process.
-  - 4 	Also log hexadecimal and ASCII dump of complete transmission after STARTTLS.
-
-.
-
-    #pf_smtp_tls_loglevel: 1
-
-Client side log level:
-
-- 0 	Disable logging of TLS activity.
-- 1 	Log only a summary message on TLS handshake completion — no logging of remote SMTP server certificate trust-chain verification errors if server certificate verification is not required. Log the summary message and unconditionally log trust-chain verification errors.
-- 2 	Also log levels during TLS negotiation.
-- 3 	Also log hexadecimal and ASCII dump of TLS negotiation process.
-- 4 	Also log hexadecimal and ASCII dump of complete transmission after STARTTLS.
-
-.
-
-    #pf_smtpd_recipient_restrictions:
-    #  - reject_invalid_hostname
-    #  - reject_non_fqdn_hostname
-    #  - reject_non_fqdn_sender
-    #  - reject_unauth_destination
-    #  - reject_unknown_sender_domain
-    #  - reject_rbl_client bl.spamcop.net
-    #  - reject_rbl_clienti dnsbl.sorbs.net
-
-[smtp_recipient_restrictions documentation](http://www.postfix.org/postconf.5.html#smtpd_recipient_restrictions)
-
-    #pf_strict_rfc821_envelopes: yes
-
-Require that addresses received in SMTP MAIL FROM and RCPT TO commands are enclosed with <>, and that those addresses do not contain RFC 822 style comments or phrases. This stops mail from poorly written software. By default, the Postfix SMTP server accepts RFC 822 syntax in MAIL FROM and RCPT TO addresses.
-
-    #pf_smtpd_delay_reject: yes
-
-[smtpd_relay_reject documentation](http://www.postfix.org/postconf.5.html#smtpd_delay_reject)
-
-    #pf_smtpd_data_restrictions:
-    #  - reject_unauth_pipelining
-
-[smtpd_data_restrictions documentation](http://www.postfix.org/postconf.5.html#smtpd_data_restrictions)
-
-    #pf_inet_protocols: ipv4
-
-The Internet protocols Postfix will attempt to use when making or accepting connections.
-Specify one or more of "ipv4" or "ipv6", separated by whitespace or commas. The form "all" is equivalent to "ipv4, ipv6" or "ipv4", depending on whether the operating system implements IPv6.
-
-**The variables listed below do not need to be changed for targeted systems (see vars/main.yml):**
-
-    pf_main_cf_path: /etc/postfix/main.cf
-
-Postfix main.cf path.
-
-    pf_main_cf_owner: root
-    pf_main_cf_group: root
-    pf_main_cf_mode: '0644'
-
-Owner, group and privileges of configuration files.
-
-    pf_packages:
-
-Contains the list of packages to be installed based on linux distribution and version.
-
-    pf_conflicting: ['sendmail']
-
-Packages that conflics with Postfix and that will be removed by this role.
-
-    pf_relayhost: "[{{ pf_smtp_server | default('none') }}]:{{ pf_smtp_server_port | default(50000) }}"
-
-The relayhost parameter specifies the default host to send mail to when no entry is matched in the optional transport(5) table. When no relayhost is given, mail is routed directly to the destination. Default values are just to prevent error if these variables do not exist.
-
-# Add/remove entries from /etc/aliases
-    #pf_add_aliases:
-    #  - { from: X, to: Y }
-    #  - { from: W, to: Z }
-
-Add/modify aliases.
-
-    #pf_remove_aliases:
-    #  - X
-
-Remove aliases.
-
-Dependencies
-------------
-
-No dependencies
-
-Example Playbook
-----------------
-
-Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
-
-    - hosts: servers
-      vars:
-        pf_inet_interfaces: loopback-only
-        pf_email_address: yourgmailaccount@gmail.com
-        pf_email_password: gmail_app_password
-        pf_smtp_server: smtp.gmail.com
-        pf_smtp_server_port: 587
-      roles:
-         - { role: guidugli.postfix }
-
-License
--------
-
-MIT / BSD
-
-Author Information
-------------------
-
-This role was created in 2020 by Carlos Guidugli.
+    pf_smtp_server: smtp.example.com
+    pf_smtp_server_port: 587
+    pf_email_address: relay@example.com
+    pf_email_password: "{{ vault_postfix_relay_password }}"
+    pf_smtp_sasl_auth_enable: true
+    pf_smtp_sasl_security_options:
+      - noanonymous
+    pf_smtp_sasl_password_maps: hash:/etc/postfix/sasl/sasl_passwd
+    pf_smtp_tls_security_level: encrypt
+    pf_inet_protocols: ipv4
+    pf_add_aliases:
+      - from: root
+        to: ops@example.com
+  roles:
+    - role: guidugli.postfix
+```
+
+## Molecule Testing
+
+The role uses shared Molecule playbooks in `molecule/shared` with scenario-specific container orchestration in `molecule/default` and `molecule/systemd`.
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements-dev.txt
+ansible-galaxy collection install -r requirements.yml
+molecule test -s default
+molecule test -s systemd
+```
+
+The `default` scenario runs rootful containers with a simple sleep command. The `systemd` scenario prepares containers with systemd and validates service-manager behavior separately.
+
+## Execution Notes
+
+- **Privilege model:** the role never sets `become`, `become_user`, or `become_method`. Package management, `/etc/postfix`, `/etc/aliases`, `postmap`, and `newaliases` require root on real hosts, so playbooks should set `become: true` when needed.
+- **Container behavior:** Molecule containers run as root, so the converge playbook intentionally uses `become: false`. This keeps role logic independent from privilege escalation policy.
+- **Systemd behavior:** service enable and restart tasks run only when `ansible_facts['service_mgr'] == 'systemd'`. Non-systemd containers still install packages, write configuration, and run `postfix check`, but service management is skipped.
+- **Idempotency:** configuration is managed with Ansible modules, command validation uses `changed_when: false`, and handlers run only when notified by changed files.

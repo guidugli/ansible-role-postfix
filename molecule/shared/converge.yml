@@ -1,9 +1,12 @@
 ---
 - name: Converge
   hosts: all
+  gather_facts: true
   pre_tasks:
     - name: Import test vars
       ansible.builtin.include_vars: vars/test.yml
-
+      tags:
+        - postfix
+        - validate
   roles:
-    - guidugli.postfix
+    - role: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}"

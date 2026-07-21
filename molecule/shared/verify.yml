@@ -1,0 +1,74 @@
+---
+- name: Verify postfix role
+  hosts: all
+  gather_facts: true
+  tasks:
+    - name: Gather package facts for verification
+      ansible.builtin.package_facts:
+        manager: auto
+      tags:
+        - postfix
+        - validate
+
+    - name: Verify Postfix package is installed
+      ansible.builtin.assert:
+        that:
+          - "'postfix' in ansible_facts['packages']"
+        quiet: true
+      tags:
+        - postfix
+        - validate
+
+    - name: Stat Postfix main.cf
+      ansible.builtin.stat:
+        path: /etc/postfix/main.cf
+      register: postfix_main_cf
+      tags:
+        - postfix
+        - validate
+
+    - name: Verify Postfix main.cf exists
+      ansible.builtin.assert:
+        that:
+          - postfix_main_cf.stat.exists
+        quiet: true
+      tags:
+        - postfix
+        - validate
+
+    - name: Read effective Postfix inet_interfaces value
+      ansible.builtin.command:
+        argv:
+          - postconf
+          - -h
+          - inet_interfaces
+      register: postfix_inet_interfaces
+      changed_when: false
+      tags:
+        - postfix
+        - validate
+
+    - name: Read effective Postfix inet_protocols value
+      ansible.builtin.command:
+        argv:
+          - postconf
+          - -h
+          - inet_protocols
+      register: postfix_inet_protocols
+      changed_when: false
+      tags:
+        - postfix
+        - validate
+
+    - name: Verify key Postfix settings
+      ansible.builtin.assert:
+        that:
+          - postfix_inet_interfaces.stdout | trim == 'loopback-only'
+          - postfix_inet_protocols.stdout | trim == 'ipv4'
+        fail_msg: >-
+          Unexpected Postfix settings. inet_interfaces={{ postfix_inet_interfaces.stdout | trim }};
+          inet_protocols={{ postfix_inet_protocols.stdout | trim }}.
+        quiet: true
+      tags:
+        - postfix
+        - validate

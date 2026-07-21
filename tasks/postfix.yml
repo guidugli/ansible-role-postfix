@@ -1,130 +1,286 @@
 ---
-
-- name: Gather the package facts
+- name: Gather installed package facts
   ansible.builtin.package_facts:
     manager: auto
+  tags:
+    - postfix
+    - validate
 
-# needed to add the when clause because on F42 it was removing postfix. Bug?
 - name: Remove conflicting packages
   ansible.builtin.package:
     name: "{{ pf_conflicting }}"
     state: absent
-  when: "'sendmail' in ansible_facts.packages"
+  when: "'sendmail' in ansible_facts['packages']"
+  tags:
+    - postfix
+    - install
 
-- name: Ensure postfix is installed
+- name: Ensure Postfix packages are installed
   ansible.builtin.package:
     name: "{{ pf_packages }}"
-    update_cache: yes
+    update_cache: true
     state: present
+  tags:
+    - postfix
+    - install
 
-- name: Ensure service is enabled
+- name: Ensure Postfix service is enabled when systemd is active
   ansible.builtin.service:
     name: "{{ pf_service_name }}"
-    enabled: yes
+    enabled: true
+  when: ansible_facts['service_mgr'] == 'systemd'
+  tags:
+    - postfix
+    - service
 
-- name: Set postfix options for string/int variables
-  ansible.builtin.lineinfile:
-    path: "{{ pf_main_cf_path }}"
-    regexp: '^{{ pf_variable_map[item] }}\s*='
-    line: '{{ pf_variable_map[item] }} = {{ vars[item] }}'
-    insertafter: '#{{ pf_variable_map[item] }}\s*='
-    owner: "{{ pf_main_cf_owner }}"
-    group: "{{ pf_main_cf_group }}"
-    mode: "{{ pf_main_cf_mode }}"
-    backup: yes
-  when: vars[item] is defined
+- name: Read current Postfix inet_interfaces value
+  ansible.builtin.command:
+    argv:
+      - postconf
+      - -h
+      - inet_interfaces
+  register: postfix_current_inet_interfaces
+  changed_when: false
+  when: pf_inet_interfaces is defined
+  tags:
+    - postfix
+    - config
+
+- name: Set Postfix inet_interfaces value
+  ansible.builtin.command:
+    argv:
+      - postconf
+      - -e
+      - "inet_interfaces={{ pf_inet_interfaces }}"
+  when:
+    - pf_inet_interfaces is defined
+    - postfix_current_inet_interfaces.stdout | trim != pf_inet_interfaces | string
+  changed_when: true
   notify: Restart postfix
+  tags:
+    - postfix
+    - config
+
+- name: Read current Postfix inet_protocols value
+  ansible.builtin.command:
+    argv:
+      - postconf
+      - -h
+      - inet_protocols
+  register: postfix_current_inet_protocols
+  changed_when: false
+  when: pf_inet_protocols is defined
+  tags:
+    - postfix
+    - config
+
+- name: Set Postfix inet_protocols value
+  ansible.builtin.command:
+    argv:
+      - postconf
+      - -e
+      - "inet_protocols={{ pf_inet_protocols }}"
+  when:
+    - pf_inet_protocols is defined
+    - postfix_current_inet_protocols.stdout | trim != pf_inet_protocols | string
+  changed_when: true
+  notify: Restart postfix
+  tags:
+    - postfix
+    - config
+
+- name: Read current Postfix string and integer option values
+  ansible.builtin.command:
+    argv:
+      - postconf
+      - -h
+      - "{{ pf_variable_map[item] }}"
+  register: postfix_current_string_options
+  changed_when: false
+  when: lookup('ansible.builtin.vars', item, default=undef()) is defined
   loop:
-    - pf_inet_interfaces
     - pf_smtp_tls_security_level
     - pf_smtp_tls_mandatory_ciphers
     - pf_smtp_tls_capath
     - pf_smtp_tls_cafile
-    - pf_inet_protocols
     - pf_mynetworks
     - pf_mydomain
     - pf_smtpd_tls_loglevel
     - pf_smtp_tls_loglevel
     - pf_smtp_sasl_password_maps
     - pf_smtpd_sender_login_maps
+  tags:
+    - postfix
+    - config
 
-- name: Set relayhost
-  ansible.builtin.lineinfile:
-    path: "{{ pf_main_cf_path }}"
-    regexp: '^relayhost\s*='
-    line: "relayhost = {{ pf_relayhost }}"
-    insertafter: '#relayhost\s*='
-    owner: "{{ pf_main_cf_owner }}"
-    group: "{{ pf_main_cf_group }}"
-    mode: "{{ pf_main_cf_mode }}"
-    backup: yes
+- name: Set Postfix string and integer option values
+  ansible.builtin.command:
+    argv:
+      - postconf
+      - -e
+      - "{{ pf_variable_map[item.item] }}={{ lookup('ansible.builtin.vars', item.item) }}"
+  when:
+    - not item.skipped | default(false)
+    - item.stdout | trim != lookup('ansible.builtin.vars', item.item) | string
+  loop: "{{ postfix_current_string_options.results }}"
+  changed_when: true
+  notify: Restart postfix
+  tags:
+    - postfix
+    - config
+
+- name: Read current Postfix relayhost value
+  ansible.builtin.command:
+    argv:
+      - postconf
+      - -h
+      - relayhost
+  register: postfix_current_relayhost
+  changed_when: false
   when:
     - pf_smtp_server is defined
     - pf_smtp_server_port is defined
-  notify: Restart postfix
+  tags:
+    - postfix
+    - config
 
-- name: Set postfix options for yes/no variables
-  vars:
-    str: "{{ 'yes' if vars[item] else 'no' }}"
-  ansible.builtin.lineinfile:
-    path: "{{ pf_main_cf_path }}"
-    regexp: '^{{ pf_variable_map[item] }}\s*='
-    line: '{{ pf_variable_map[item] }} = {{ str }}'
-    insertafter: '#{{ pf_variable_map[item] }}\s*='
-    owner: "{{ pf_main_cf_owner }}"
-    group: "{{ pf_main_cf_group }}"
-    mode: "{{ pf_main_cf_mode }}"
-    backup: yes
-  when: vars[item] is defined
+- name: Set Postfix relayhost
+  ansible.builtin.command:
+    argv:
+      - postconf
+      - -e
+      - "relayhost={{ pf_relayhost }}"
+  when:
+    - pf_smtp_server is defined
+    - pf_smtp_server_port is defined
+    - postfix_current_relayhost.stdout | trim != pf_relayhost
+  changed_when: true
+  notify: Restart postfix
+  tags:
+    - postfix
+    - config
+
+- name: Read current Postfix yes/no option values
+  ansible.builtin.command:
+    argv:
+      - postconf
+      - -h
+      - "{{ pf_variable_map[item] }}"
+  register: postfix_current_boolean_options
+  changed_when: false
+  when: lookup('ansible.builtin.vars', item, default=undef()) is defined
   loop:
     - pf_smtp_sasl_auth_enable
-    - pf_smtp_use_tls
     - pf_disable_vrfy_command
     - pf_smtpd_helo_required
     - pf_strict_rfc821_envelopes
-  notify: Restart postfix
+    - pf_smtpd_delay_reject
+  tags:
+    - postfix
+    - config
 
-- name: Set postfix options for list variables
+- name: Set Postfix yes/no option values
+  ansible.builtin.command:
+    argv:
+      - postconf
+      - -e
+      - "{{ pf_variable_map[item.item] }}={{ postfix_boolean_value }}"
   vars:
-    str: "{{ vars[item] | join(', ') }}"
-  ansible.builtin.lineinfile:
-    path: "{{ pf_main_cf_path }}"
-    regexp: '^{{ pf_variable_map[item] }}\s*='
-    line: '{{ pf_variable_map[item] }} = {{ str }}'
-    insertafter: '#{{ pf_variable_map[item] }}\s*='
-    owner: "{{ pf_main_cf_owner }}"
-    group: "{{ pf_main_cf_group }}"
-    mode: "{{ pf_main_cf_mode }}"
-    backup: yes
-  when: vars[item] is defined
+    postfix_boolean_value: "{{ 'yes' if lookup('ansible.builtin.vars', item.item) | bool else 'no' }}"
+  when:
+    - not item.skipped | default(false)
+    - item.stdout | trim != postfix_boolean_value
+  loop: "{{ postfix_current_boolean_options.results }}"
+  changed_when: true
+  notify: Restart postfix
+  tags:
+    - postfix
+    - config
+
+- name: Read current Postfix list option values
+  ansible.builtin.command:
+    argv:
+      - postconf
+      - -h
+      - "{{ pf_variable_map[item] }}"
+  register: postfix_current_list_options
+  changed_when: false
+  when: lookup('ansible.builtin.vars', item, default=undef()) is defined
   loop:
     - pf_smtp_sasl_security_options
     - pf_smtpd_helo_restrictions
     - pf_smtpd_recipient_restrictions
     - pf_smtpd_data_restrictions
-  notify: Restart postfix
+  tags:
+    - postfix
+    - config
 
-- name: "Create/update password map file ({{ path_without_prefix }})"
+- name: Set Postfix list option values
+  ansible.builtin.command:
+    argv:
+      - postconf
+      - -e
+      - "{{ pf_variable_map[item.item] }}={{ postfix_list_value }}"
   vars:
-    path_without_prefix: "{{ pf_smtp_sasl_password_maps | regex_replace('^.*?:', '') }}"
-  ansible.builtin.lineinfile:
-    path: "{{ path_without_prefix }}"
-    regexp: '^{{ pf_relayhost }}\s+{{ pf_email_address }}:'
-    line: '{{ pf_relayhost }} {{ pf_email_address }}:{{ pf_email_password }}'
+    postfix_list_value: "{{ lookup('ansible.builtin.vars', item.item) | join(', ') }}"
+  when:
+    - not item.skipped | default(false)
+    - item.stdout | trim != postfix_list_value
+  loop: "{{ postfix_current_list_options.results }}"
+  changed_when: true
+  notify: Restart postfix
+  tags:
+    - postfix
+    - config
+
+- name: Ensure SASL password map directory exists
+  ansible.builtin.file:
+    path: "{{ pf_sasl_password_map_path | dirname }}"
+    state: directory
     owner: "{{ pf_main_cf_owner }}"
     group: "{{ pf_main_cf_group }}"
-    mode: '0600'
-    create: yes
-    backup: yes
+    mode: '0700'
+  vars:
+    pf_sasl_password_map_path: "{{ pf_smtp_sasl_password_maps | regex_replace('.*?:', '') }}"
   when:
     - pf_email_address is defined
     - pf_email_password is defined
     - pf_smtp_server is defined
     - pf_smtp_server_port is defined
+    - pf_smtp_sasl_password_maps is defined
+  tags:
+    - postfix
+    - config
+
+- name: Create or update Postfix SASL password map file
+  ansible.builtin.lineinfile:
+    path: "{{ pf_sasl_password_map_path }}"
+    regexp: '{{ pf_relayhost | regex_escape }}\\s+{{ pf_email_address | regex_escape }}:'
+    line: '{{ pf_relayhost }} {{ pf_email_address }}:{{ pf_email_password }}'
+    owner: "{{ pf_main_cf_owner }}"
+    group: "{{ pf_main_cf_group }}"
+    mode: '0600'
+    create: true
+    backup: true
+  vars:
+    pf_sasl_password_map_path: "{{ pf_smtp_sasl_password_maps | regex_replace('.*?:', '') }}"
+  when:
+    - pf_email_address is defined
+    - pf_email_password is defined
+    - pf_smtp_server is defined
+    - pf_smtp_server_port is defined
+    - pf_smtp_sasl_password_maps is defined
+  no_log: true
   notify:
     - Run postmap
     - Restart postfix
+  tags:
+    - postfix
+    - config
 
-- name: Validate configuration
+- name: Validate Postfix configuration
   ansible.builtin.command: postfix check
   changed_when: false
+  tags:
+    - postfix
+    - validate

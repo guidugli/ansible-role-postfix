@@ -1,28 +1,31 @@
 ---
-
-- name: Remove aliases
+- name: Remove Postfix aliases
   ansible.builtin.lineinfile:
     path: "{{ pf_aliases_path }}"
-    regexp: '^{{ item }}:'
+    regexp: '^{{ item | regex_escape }}:'
     owner: "{{ pf_main_cf_owner }}"
     group: "{{ pf_main_cf_group }}"
     mode: '0600'
-    backup: yes
+    backup: true
     state: absent
   loop: "{{ pf_remove_aliases | default([], true) }}"
-  notify:
-    - Run newaliases
+  notify: Run newaliases
+  tags:
+    - postfix
+    - config
 
-- name: Add/Modify aliases
+- name: Add or modify Postfix aliases
   ansible.builtin.lineinfile:
     path: "{{ pf_aliases_path }}"
-    regexp: '^{{ item.from }}:'
+    regexp: '^{{ item.from | regex_escape }}:'
     line: "{{ item.from }}:   {{ item.to }}"
     owner: "{{ pf_main_cf_owner }}"
     group: "{{ pf_main_cf_group }}"
     mode: '0600'
-    backup: yes
+    backup: true
     state: present
   loop: "{{ pf_add_aliases | default([], true) }}"
-  notify:
-    - Run newaliases
+  notify: Run newaliases
+  tags:
+    - postfix
+    - config

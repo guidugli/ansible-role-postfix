@@ -1,0 +1,134 @@
+---
+argument_specs:
+  main:
+    short_description: Install and configure Postfix relay settings
+    description:
+      - Installs Postfix and manages main.cf options, SASL password maps, and aliases.
+      - The role does not set privilege escalation; callers decide when become is required.
+    options:
+      pf_inet_interfaces:
+        type: str
+        default: loopback-only
+        description: Interface addresses that can receive email.
+      pf_email_address:
+        type: str
+        required: false
+        no_log: false
+        description: SMTP username or sender account for SASL authentication.
+      pf_email_password:
+        type: str
+        required: false
+        no_log: true
+        description: SMTP password, app password, or secret for SASL authentication.
+      pf_smtp_server:
+        type: str
+        required: false
+        description: SMTP relay server hostname.
+      pf_smtp_server_port:
+        type: int
+        required: false
+        description: SMTP relay server port.
+      pf_mydomain:
+        type: str
+        required: false
+        description: Local internet domain name for Postfix.
+      pf_smtp_sasl_auth_enable:
+        type: bool
+        required: false
+        description: Enable SMTP SASL authentication.
+      pf_smtp_sasl_security_options:
+        type: list
+        elements: str
+        required: false
+        description: SASL mechanisms or options to disable or require.
+      pf_smtp_sasl_password_maps:
+        type: str
+        required: false
+        description: Postfix lookup table used for SMTP SASL credentials.
+      pf_smtpd_sender_login_maps:
+        type: str
+        required: false
+        description: Optional lookup table mapping SASL login names to envelope sender addresses.
+      pf_smtp_tls_security_level:
+        type: str
+        required: false
+        choices: [none, may, encrypt, dane, dane-only, fingerprint, verify, secure]
+        description: SMTP TLS security level for the Postfix client.
+      pf_smtp_tls_mandatory_ciphers:
+        type: str
+        required: false
+        choices: [export, low, medium, high, 'null']
+        description: Mandatory cipher grade used by Postfix SMTP TLS.
+      pf_smtp_tls_cafile:
+        type: str
+        required: false
+        description: CA certificate file for Postfix SMTP TLS.
+      pf_smtp_tls_capath:
+        type: str
+        required: false
+        description: Directory containing CA certificates for Postfix SMTP TLS.
+      pf_disable_vrfy_command:
+        type: bool
+        required: false
+        description: Disable the Postfix VRFY command.
+      pf_mynetworks:
+        type: str
+        required: false
+        description: Networks allowed to relay through this host.
+      pf_smtpd_helo_required:
+        type: bool
+        required: false
+        description: Require SMTP clients to send HELO or EHLO.
+      pf_smtpd_helo_restrictions:
+        type: list
+        elements: str
+        required: false
+        description: HELO restrictions to write to main.cf.
+      pf_smtpd_tls_loglevel:
+        type: int
+        required: false
+        description: TLS log verbosity for the Postfix SMTP server.
+      pf_smtp_tls_loglevel:
+        type: int
+        required: false
+        description: TLS log verbosity for the Postfix SMTP client.
+      pf_smtpd_recipient_restrictions:
+        type: list
+        elements: str
+        required: false
+        description: Recipient restrictions to write to main.cf.
+      pf_strict_rfc821_envelopes:
+        type: bool
+        required: false
+        description: Require strict RFC 821 envelope syntax.
+      pf_smtpd_delay_reject:
+        type: bool
+        required: false
+        description: Delay SMTP rejection decisions until RCPT TO.
+      pf_smtpd_data_restrictions:
+        type: list
+        elements: str
+        required: false
+        description: DATA command restrictions to write to main.cf.
+      pf_inet_protocols:
+        type: str
+        required: false
+        choices: [all, ipv4, ipv6]
+        description: Internet protocols Postfix uses for connections.
+      pf_add_aliases:
+        type: list
+        elements: dict
+        required: false
+        description: Aliases to add or update in /etc/aliases.
+        options:
+          from:
+            type: str
+            required: true
+          to:
+            type: str
+            required: true
+      pf_remove_aliases:
+        type: list
+        elements: str
+        required: false
+        description: Aliases to remove from /etc/aliases.

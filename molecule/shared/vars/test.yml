@@ -1,0 +1,40 @@
+---
+pf_inet_interfaces: loopback-only
+pf_email_address: yourgmailaccount@gmail.com
+pf_email_password: gmail_app_password
+pf_smtp_server: smtp.gmail.com
+pf_smtp_server_port: 587
+pf_mydomain: mydomain.com
+pf_smtp_sasl_auth_enable: true
+pf_smtp_sasl_security_options:
+  - noanonymous
+pf_smtp_sasl_password_maps: hash:/etc/postfix/sasl/sasl_passwd
+pf_smtpd_sender_login_maps: hash:/etc/postfix/smtpd_sender_login_maps
+pf_smtp_tls_security_level: encrypt
+pf_smtp_tls_mandatory_ciphers: high
+pf_smtp_tls_capath: /etc/ssl/certs
+pf_disable_vrfy_command: true
+pf_mynetworks: "127.0.0.0/8 [::ffff:127.0.0.0]/104 [::1]/128"
+pf_smtpd_helo_required: true
+pf_smtpd_helo_restrictions:
+  - permit_mynetworks
+  - reject_non_fqdn_helo_hostname
+  - reject_invalid_helo_hostname
+pf_smtpd_tls_loglevel: 1
+pf_smtp_tls_loglevel: 1
+pf_smtpd_recipient_restrictions:
+  - reject_invalid_hostname
+  - reject_non_fqdn_hostname
+  - reject_non_fqdn_sender
+  - reject_unauth_destination
+  - reject_unknown_sender_domain
+pf_strict_rfc821_envelopes: true
+pf_smtpd_delay_reject: true
+pf_smtpd_data_restrictions:
+  - reject_unauth_pipelining
+pf_inet_protocols: ipv4
+pf_add_aliases:
+  - from: root
+    to: xxx@x.com
+pf_remove_aliases:
+  - abc

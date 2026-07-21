@@ -1,18 +1,23 @@
 ---
-# handlers file for postfix
-
 - name: Run postmap
-  become: yes
   ansible.builtin.command: "postmap {{ pf_smtp_sasl_password_maps }}"
   changed_when: true
+  tags:
+    - postfix
+    - config
 
 - name: Restart postfix
-  become: yes
   ansible.builtin.service:
     name: "{{ pf_service_name }}"
     state: restarted
+  when: ansible_facts['service_mgr'] == 'systemd'
+  tags:
+    - postfix
+    - service
 
 - name: Run newaliases
-  become: yes
-  ansible.builtin.command: "newaliases"
+  ansible.builtin.command: newaliases
   changed_when: true
+  tags:
+    - postfix
+    - config
