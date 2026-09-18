@@ -120,11 +120,12 @@
     - postfix
     - validate
 
+
 - name: Check integer value variables
   ansible.builtin.assert:
     that:
-      - litem is integer
-      - litem >= 0
+      - litem | string | regex_search('^[0-9]+$')
+      - litem | int >= 0
     quiet: true
     fail_msg: "{{ item }} must be a non-negative integer"
   vars:
