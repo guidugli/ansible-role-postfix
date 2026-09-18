@@ -1,10 +1,19 @@
 ---
+- name: Build list of defined variables
+  ansible.builtin.set_fact:
+    postfix_defined_vars: "{{ lookup('ansible.builtin.varnames', '^(pf_).*') }}"
+  tags:
+    - postfix
+    - validate
+
 - name: Check boolean values
   ansible.builtin.assert:
     that:
-      - lookup('ansible.builtin.vars', item) | type_debug == 'bool'
+      - lookup('ansible.builtin.vars', item) is boolean
     quiet: true
-  when: lookup("ansible.builtin.vars", item, default=undef()) is defined
+    fail_msg: "{{ item }} must be a boolean"
+  when:
+    - item in postfix_defined_vars
   loop:
     - pf_smtp_sasl_auth_enable
     - pf_disable_vrfy_command
@@ -21,9 +30,11 @@
       - litem is string
       - litem | length > 0
     quiet: true
+    fail_msg: "{{ item }} must be a non-empty string"
   vars:
-    litem: "{{ lookup('vars', item) }}"
-  when: lookup("ansible.builtin.vars", item, default=undef()) is defined
+    litem: "{{ lookup('ansible.builtin.vars', item) }}"
+  when:
+    - item in postfix_defined_vars
   loop:
     - pf_inet_interfaces
     - pf_email_address
@@ -42,12 +53,15 @@
 - name: Check list values
   ansible.builtin.assert:
     that:
-      - litem is iterable
+      - litem is sequence
+      - litem is not string
       - litem | length > 0
     quiet: true
+    fail_msg: "{{ item }} must be a non-empty list"
   vars:
-    litem: "{{ lookup('vars', item) }}"
-  when: lookup("ansible.builtin.vars", item, default=undef()) is defined
+    litem: "{{ lookup('ansible.builtin.vars', item) }}"
+  when:
+    - item in postfix_defined_vars
   loop:
     - pf_smtp_sasl_security_options
     - pf_smtpd_helo_restrictions
@@ -63,7 +77,8 @@
       - item is string
       - item in pf_smtp_sasl_security_options_vv
     quiet: true
-  when: pf_smtp_sasl_security_options is defined
+  when:
+    - pf_smtp_sasl_security_options is defined
   loop: "{{ pf_smtp_sasl_security_options }}"
   tags:
     - postfix
@@ -75,7 +90,8 @@
       - pf_smtp_tls_security_level is string
       - pf_smtp_tls_security_level in pf_smtp_tls_security_level_vv
     quiet: true
-  when: pf_smtp_tls_security_level is defined
+  when:
+    - pf_smtp_tls_security_level is defined
   tags:
     - postfix
     - validate
@@ -86,7 +102,8 @@
       - pf_smtp_tls_mandatory_ciphers is string
       - pf_smtp_tls_mandatory_ciphers in pf_smtp_tls_mandatory_ciphers_vv
     quiet: true
-  when: pf_smtp_tls_mandatory_ciphers is defined
+  when:
+    - pf_smtp_tls_mandatory_ciphers is defined
   tags:
     - postfix
     - validate
@@ -97,7 +114,8 @@
       - pf_inet_protocols is string
       - pf_inet_protocols in pf_inet_protocols_vv
     quiet: true
-  when: pf_inet_protocols is defined
+  when:
+    - pf_inet_protocols is defined
   tags:
     - postfix
     - validate
@@ -105,11 +123,14 @@
 - name: Check integer value variables
   ansible.builtin.assert:
     that:
-      - litem | int(-1) >= 0
+      - litem is integer
+      - litem >= 0
     quiet: true
+    fail_msg: "{{ item }} must be a non-negative integer"
   vars:
-    litem: "{{ lookup('vars', item) }}"
-  when: lookup("ansible.builtin.vars", item, default=undef()) is defined
+    litem: "{{ lookup('ansible.builtin.vars', item) }}"
+  when:
+    - item in postfix_defined_vars
   loop:
     - pf_smtp_server_port
     - pf_smtpd_tls_loglevel
@@ -125,10 +146,12 @@
       - litem | length > 0
       - litem is regex(pathre)
     quiet: true
+    fail_msg: "{{ item }} must be an absolute path"
   vars:
     pathre: '^/'
-    litem: "{{ lookup('vars', item) }}"
-  when: lookup("ansible.builtin.vars", item, default=undef()) is defined
+    litem: "{{ lookup('ansible.builtin.vars', item) }}"
+  when:
+    - item in postfix_defined_vars
   loop:
     - pf_smtp_tls_capath
     - pf_smtp_tls_cafile
