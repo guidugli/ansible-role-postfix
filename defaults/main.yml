@@ -5,6 +5,11 @@
 # bound to loopback only unless the caller explicitly opens the listener.
 pf_inet_interfaces: loopback-only
 
+# On system without ipv6 the role will fail if pf_inet_protocols is set to all or ipv6.
+# Also, it is safer to keep ipv4 as many systems don't change default ipv6 configuration
+# including firewall.
+pf_inet_protocols: ipv4
+
 # Optional relay/SASL settings. Leave undefined to preserve the existing system configuration.
 # pf_email_address: yourgmailaccount@gmail.com
 # pf_email_password: gmail_app_password
@@ -39,7 +44,6 @@ pf_inet_interfaces: loopback-only
 # pf_smtpd_delay_reject: true
 # pf_smtpd_data_restrictions:
 #   - reject_unauth_pipelining
-# pf_inet_protocols: ipv4
 # pf_add_aliases:
 #   - from: root
 #     to: admin@example.com

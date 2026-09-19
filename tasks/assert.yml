@@ -127,8 +127,6 @@
       - pf_inet_protocols in pf_inet_protocols_vv
       - postfix_ipv6_available or pf_inet_protocols == 'ipv4'
     quiet: true
-  when:
-    - pf_inet_protocols is defined
   tags:
     - postfix
     - validate
