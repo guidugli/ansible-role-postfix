@@ -100,7 +100,8 @@
       - "{{ pf_variable_map[item] }}"
   register: postfix_current_string_options
   changed_when: false
-  when: lookup('ansible.builtin.vars', item, default=undef()) is defined
+  when:
+    - lookup('ansible.builtin.vars', item, default=none) is not none
   loop:
     - pf_smtp_tls_security_level
     - pf_smtp_tls_mandatory_ciphers
