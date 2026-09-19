@@ -108,11 +108,24 @@
     - postfix
     - validate
 
+- name: Determine whether IPv6 is available
+  ansible.builtin.set_fact:
+    postfix_ipv6_available: >-
+      {{
+        ansible_facts.interfaces
+        | map('extract', ansible_facts)
+        | selectattr('ipv6', 'defined')
+        | map(attribute='ipv6')
+        | flatten
+        | length > 0
+      }}
+
 - name: Check pf_inet_protocols values
   ansible.builtin.assert:
     that:
       - pf_inet_protocols is string
       - pf_inet_protocols in pf_inet_protocols_vv
+      - postfix_ipv6_available or pf_inet_protocols == 'ipv4'
     quiet: true
   when:
     - pf_inet_protocols is defined
@@ -120,11 +133,10 @@
     - postfix
     - validate
 
-
 - name: Check integer value variables
   ansible.builtin.assert:
     that:
-      - litem | string | regex_search('^[0-9]+$')
+      - litem | string is match('^[0-9]+$')
       - litem | int >= 0
     quiet: true
     fail_msg: "{{ item }} must be a non-negative integer"

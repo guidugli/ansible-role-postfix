@@ -33,6 +33,37 @@
     - postfix
     - service
 
+- name: Read current Postfix inet_protocols value
+  ansible.builtin.command:
+    argv:
+      - postconf
+      - -h
+      - inet_protocols
+  register: postfix_current_inet_protocols
+  changed_when: false
+  failed_when: false
+  when: pf_inet_protocols is defined
+  tags:
+    - postfix
+    - config
+
+- name: Set Postfix inet_protocols value
+  ansible.builtin.command:
+    argv:
+      - postconf
+      - -e
+      - "inet_protocols={{ pf_inet_protocols }}"
+  when:
+    - pf_inet_protocols is defined
+    - postfix_current_inet_protocols.failed
+      or postfix_current_inet_protocols.stdout | trim != pf_inet_protocols | string
+
+  changed_when: true
+  notify: Restart postfix
+  tags:
+    - postfix
+    - config
+
 - name: Read current Postfix inet_interfaces value
   ansible.builtin.command:
     argv:
@@ -55,34 +86,6 @@
   when:
     - pf_inet_interfaces is defined
     - postfix_current_inet_interfaces.stdout | trim != pf_inet_interfaces | string
-  changed_when: true
-  notify: Restart postfix
-  tags:
-    - postfix
-    - config
-
-- name: Read current Postfix inet_protocols value
-  ansible.builtin.command:
-    argv:
-      - postconf
-      - -h
-      - inet_protocols
-  register: postfix_current_inet_protocols
-  changed_when: false
-  when: pf_inet_protocols is defined
-  tags:
-    - postfix
-    - config
-
-- name: Set Postfix inet_protocols value
-  ansible.builtin.command:
-    argv:
-      - postconf
-      - -e
-      - "inet_protocols={{ pf_inet_protocols }}"
-  when:
-    - pf_inet_protocols is defined
-    - postfix_current_inet_protocols.stdout | trim != pf_inet_protocols | string
   changed_when: true
   notify: Restart postfix
   tags:
