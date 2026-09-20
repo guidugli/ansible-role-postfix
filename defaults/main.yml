@@ -49,3 +49,19 @@ pf_inet_protocols: ipv4
 #     to: admin@example.com
 # pf_remove_aliases:
 #   - oldalias
+
+# Optional sender canonical map. The map path must include its lookup type.
+# pf_sender_canonical_maps: hash:/etc/postfix/sender_canonical
+# pf_add_sender_canonical:
+#   - from: root@localhost
+#     to: sender@example.com
+# pf_remove_sender_canonical:
+#   - old-sender@localhost
+
+# Optional SMTP generic map. The map path must include its lookup type.
+# pf_smtp_generic_maps: hash:/etc/postfix/generic
+# pf_add_smtp_generic:
+#   - from: root@localhost
+#     to: sender@example.com
+# pf_remove_smtp_generic:
+#   - old-sender@localhost

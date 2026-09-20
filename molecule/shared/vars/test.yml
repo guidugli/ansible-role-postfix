@@ -38,3 +38,16 @@ pf_add_aliases:
     to: xxx@x.com
 pf_remove_aliases:
   - abc
+
+pf_sender_canonical_maps: hash:/etc/postfix/sender_canonical
+pf_add_sender_canonical:
+  - from: root@localhost
+    to: canonical@example.com
+pf_remove_sender_canonical:
+  - obsolete@localhost
+pf_smtp_generic_maps: hash:/etc/postfix/generic
+pf_add_smtp_generic:
+  - from: root@localhost
+    to: generic@example.com
+pf_remove_smtp_generic:
+  - obsolete@localhost

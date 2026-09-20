@@ -16,6 +16,12 @@
     - service
     - validate
 
+- name: Include Postfix address map management tasks
+  ansible.builtin.include_tasks: maps.yml
+  tags:
+    - postfix
+    - config
+
 - name: Include aliases management tasks
   ansible.builtin.include_tasks: aliases.yml
   tags:

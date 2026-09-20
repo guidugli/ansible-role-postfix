@@ -106,3 +106,5 @@ pf_variable_map:
   pf_smtpd_data_restrictions: smtpd_data_restrictions
   pf_inet_protocols: inet_protocols
   pf_smtpd_sender_login_maps: smtpd_sender_login_maps
+  pf_sender_canonical_maps: sender_canonical_maps
+  pf_smtp_generic_maps: smtp_generic_maps

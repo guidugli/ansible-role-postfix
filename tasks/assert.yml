@@ -46,6 +46,8 @@
     - pf_smtp_tls_cafile
     - pf_mydomain
     - pf_smtpd_sender_login_maps
+    - pf_sender_canonical_maps
+    - pf_smtp_generic_maps
   tags:
     - postfix
     - validate
@@ -67,6 +69,10 @@
     - pf_smtpd_helo_restrictions
     - pf_smtpd_recipient_restrictions
     - pf_smtpd_data_restrictions
+    - pf_add_sender_canonical
+    - pf_remove_sender_canonical
+    - pf_add_smtp_generic
+    - pf_remove_smtp_generic
   tags:
     - postfix
     - validate
@@ -104,6 +110,38 @@
     quiet: true
   when:
     - pf_smtp_tls_mandatory_ciphers is defined
+  tags:
+    - postfix
+    - validate
+
+- name: Check sender canonical map entry dictionaries
+  ansible.builtin.assert:
+    that:
+      - item.from is string
+      - item.from | length > 0
+      - item.to is string
+      - item.to | length > 0
+    quiet: true
+    fail_msg: Each sender canonical entry requires non-empty from and to strings
+  loop: "{{ pf_add_sender_canonical | default([], true) }}"
+  loop_control:
+    label: "{{ item.from | default('invalid entry') }}"
+  tags:
+    - postfix
+    - validate
+
+- name: Check SMTP generic map entry dictionaries
+  ansible.builtin.assert:
+    that:
+      - item.from is string
+      - item.from | length > 0
+      - item.to is string
+      - item.to | length > 0
+    quiet: true
+    fail_msg: Each SMTP generic entry requires non-empty from and to strings
+  loop: "{{ pf_add_smtp_generic | default([], true) }}"
+  loop_control:
+    label: "{{ item.from | default('invalid entry') }}"
   tags:
     - postfix
     - validate

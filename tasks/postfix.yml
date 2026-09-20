@@ -113,6 +113,8 @@
     - pf_smtp_tls_loglevel
     - pf_smtp_sasl_password_maps
     - pf_smtpd_sender_login_maps
+    - pf_sender_canonical_maps
+    - pf_smtp_generic_maps
   tags:
     - postfix
     - config

@@ -52,12 +52,25 @@ argument_specs:
       pf_smtp_tls_security_level:
         type: str
         required: false
-        choices: [none, may, encrypt, dane, dane-only, fingerprint, verify, secure]
+        choices:
+          - none
+          - may
+          - encrypt
+          - dane
+          - dane-only
+          - fingerprint
+          - verify
+          - secure
         description: SMTP TLS security level for the Postfix client.
       pf_smtp_tls_mandatory_ciphers:
         type: str
         required: false
-        choices: [export, low, medium, high, 'null']
+        choices:
+          - export
+          - low
+          - medium
+          - high
+          - 'null'
         description: Mandatory cipher grade used by Postfix SMTP TLS.
       pf_smtp_tls_cafile:
         type: str
@@ -113,7 +126,10 @@ argument_specs:
       pf_inet_protocols:
         type: str
         required: false
-        choices: [all, ipv4, ipv6]
+        choices:
+          - all
+          - ipv4
+          - ipv6
         description: Internet protocols Postfix uses for connections.
       pf_add_aliases:
         type: list
@@ -132,3 +148,45 @@ argument_specs:
         elements: str
         required: false
         description: Aliases to remove from /etc/aliases.
+      pf_sender_canonical_maps:
+        type: str
+        required: false
+        description: Lookup table specification assigned to sender_canonical_maps.
+      pf_add_sender_canonical:
+        type: list
+        elements: dict
+        required: false
+        description: Sender canonical entries to add or update.
+        options:
+          from:
+            type: str
+            required: true
+          to:
+            type: str
+            required: true
+      pf_remove_sender_canonical:
+        type: list
+        elements: str
+        required: false
+        description: Sender canonical lookup keys to remove.
+      pf_smtp_generic_maps:
+        type: str
+        required: false
+        description: Lookup table specification assigned to smtp_generic_maps.
+      pf_add_smtp_generic:
+        type: list
+        elements: dict
+        required: false
+        description: SMTP generic entries to add or update.
+        options:
+          from:
+            type: str
+            required: true
+          to:
+            type: str
+            required: true
+      pf_remove_smtp_generic:
+        type: list
+        elements: str
+        required: false
+        description: SMTP generic lookup keys to remove.

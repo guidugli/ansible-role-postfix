@@ -1,4 +1,4 @@
-[![CI](https://github.com/guidugli/ansible-role-postfix/actions/workflows/CI.yml/badge.svg)](https://github.com/guidugli/ansible-role-postfix/actions/workflows/CI.yml)
+[![CI](https://github.com/guidugli/ansible-role-postfix/actions/workflows/CI.yml/badge.svg)](https://github.com/guidugli/ansible-role-postfix/actions/workflows/CI.yml) [![Release](https://img.shields.io/github/v/release/guidugli/ansible-role-postfix?display_name=tag)](https://github.com/guidugli/ansible-role-postfix/releases) [![Galaxy](https://img.shields.io/badge/galaxy-guidugli.postfix-blue)](https://galaxy.ansible.com/ui/standalone/roles/guidugli/postfix/) [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Release](https://img.shields.io/github/v/tag/guidugli/ansible-role-postfix?sort=semver)](https://github.com/guidugli/ansible-role-postfix/tags)
 [![Galaxy](https://img.shields.io/badge/galaxy-guidugli.postfix-blue.svg)](https://galaxy.ansible.com/ui/standalone/roles/guidugli/postfix/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
@@ -69,6 +69,14 @@ Internal variables in `vars/main.yml` define OS-specific package lists, service 
     pf_smtp_sasl_password_maps: hash:/etc/postfix/sasl/sasl_passwd
     pf_smtp_tls_security_level: encrypt
     pf_inet_protocols: ipv4
+    pf_sender_canonical_maps: hash:/etc/postfix/sender_canonical
+    pf_add_sender_canonical:
+      - from: root@localhost
+        to: sender@example.com
+    pf_smtp_generic_maps: hash:/etc/postfix/generic
+    pf_add_smtp_generic:
+      - from: root@localhost
+        to: sender@example.com
     pf_add_aliases:
       - from: root
         to: ops@example.com
@@ -97,3 +105,20 @@ The `default` scenario runs rootful containers with a simple sleep command. The 
 - **Container behavior:** Molecule containers run as root, so the converge playbook intentionally uses `become: false`. This keeps role logic independent from privilege escalation policy.
 - **Systemd behavior:** service enable and restart tasks run only when `ansible_facts['service_mgr'] == 'systemd'`. Non-systemd containers still install packages, write configuration, and run `postfix check`, but service management is skipped.
 - **Idempotency:** configuration is managed with Ansible modules, command validation uses `changed_when: false`, and handlers run only when notified by changed files.
+
+### Release workflow
+
+Refresh generated metadata and run the release helper:
+
+```bash
+./scripts/update_release_metadata.sh
+./scripts/release.sh --version v1.2.0 --message "Release v1.2.0"
+```
+
+### License
+
+MIT
+
+### Author
+
+Carlos Guidugli

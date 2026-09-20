@@ -72,3 +72,40 @@
       tags:
         - postfix
         - validate
+
+    - name: Verify sender canonical and SMTP generic maps
+      ansible.builtin.command:
+        argv:
+          - postmap
+          - -q
+          - root@localhost
+          - "{{ item.map }}"
+      loop:
+        - map: hash:/etc/postfix/sender_canonical
+          expected: canonical@example.com
+        - map: hash:/etc/postfix/generic
+          expected: generic@example.com
+      register: postfix_address_map_queries
+      changed_when: false
+      failed_when: item.expected not in postfix_address_map_queries.stdout
+      tags:
+        - postfix
+        - validate
+
+    - name: Read configured Postfix address map settings
+      ansible.builtin.command:
+        argv:
+          - postconf
+          - -h
+          - "{{ item.option }}"
+      loop:
+        - option: sender_canonical_maps
+          expected: hash:/etc/postfix/sender_canonical
+        - option: smtp_generic_maps
+          expected: hash:/etc/postfix/generic
+      register: postfix_address_map_options
+      changed_when: false
+      failed_when: postfix_address_map_options.stdout | trim != item.expected
+      tags:
+        - postfix
+        - validate
