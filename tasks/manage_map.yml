@@ -1,0 +1,65 @@
+---
+- name: Derive Postfix map file path
+  ansible.builtin.set_fact:
+    postfix_map_path: "{{ postfix_map_spec | regex_replace('^[^:]+:', '') }}"
+  tags:
+    - postfix
+    - config
+
+- name: Ensure Postfix map directory exists
+  ansible.builtin.file:
+    path: "{{ postfix_map_path | dirname }}"
+    state: directory
+    owner: "{{ pf_main_cf_owner }}"
+    group: "{{ pf_main_cf_group }}"
+    mode: '0755'
+  tags:
+    - postfix
+    - config
+
+- name: Remove Postfix map entries
+  ansible.builtin.lineinfile:
+    path: "{{ postfix_map_path }}"
+    regexp: '^{{ item | regex_escape }}\s+'
+    owner: "{{ pf_main_cf_owner }}"
+    group: "{{ pf_main_cf_group }}"
+    mode: '0600'
+    create: true
+    backup: true
+    state: absent
+  loop: "{{ postfix_map_remove_entries }}"
+  register: postfix_map_removed
+  tags:
+    - postfix
+    - config
+
+- name: Add or modify Postfix map entries
+  ansible.builtin.lineinfile:
+    path: "{{ postfix_map_path }}"
+    regexp: '^{{ item.from | regex_escape }}\s+'
+    line: "{{ item.from }} {{ item.to }}"
+    owner: "{{ pf_main_cf_owner }}"
+    group: "{{ pf_main_cf_group }}"
+    mode: '0600'
+    create: true
+    backup: true
+    state: present
+  loop: "{{ postfix_map_add_entries }}"
+  loop_control:
+    label: "{{ item.from }}"
+  register: postfix_map_added
+  tags:
+    - postfix
+    - config
+
+- name: Rebuild changed Postfix map database
+  ansible.builtin.command:
+    argv:
+      - postmap
+      - "{{ postfix_map_spec }}"
+  when: postfix_map_removed is changed or postfix_map_added is changed
+  changed_when: true
+  notify: Restart postfix
+  tags:
+    - postfix
+    - config

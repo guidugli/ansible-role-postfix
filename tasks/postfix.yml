@@ -101,7 +101,7 @@
   register: postfix_current_string_options
   changed_when: false
   when:
-    - item in vars
+    - item in query('ansible.builtin.varnames', '^' ~ item ~ '$')
   loop:
     - pf_smtp_tls_security_level
     - pf_smtp_tls_mandatory_ciphers
@@ -173,7 +173,7 @@
   register: postfix_current_boolean_options
   changed_when: false
   when:
-    - item in vars
+    - item in query('ansible.builtin.varnames', '^' ~ item ~ '$')
   loop:
     - pf_smtp_sasl_auth_enable
     - pf_disable_vrfy_command
@@ -211,7 +211,7 @@
   register: postfix_current_list_options
   changed_when: false
   when:
-    - item in vars
+    - item in query('ansible.builtin.varnames', '^' ~ item ~ '$')
   loop:
     - pf_smtp_sasl_security_options
     - pf_smtpd_helo_restrictions

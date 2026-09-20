@@ -1,0 +1,26 @@
+---
+- name: Manage Postfix sender canonical map
+  when: pf_sender_canonical_maps is defined
+  vars:
+    postfix_map_spec: "{{ pf_sender_canonical_maps }}"
+    postfix_map_add_entries: "{{ pf_add_sender_canonical | default([], true) }}"
+    postfix_map_remove_entries: "{{ pf_remove_sender_canonical | default([], true) }}"
+  tags:
+    - postfix
+    - config
+  block:
+    - name: Manage sender canonical map entries
+      ansible.builtin.include_tasks: manage_map.yml
+
+- name: Manage Postfix SMTP generic map
+  when: pf_smtp_generic_maps is defined
+  vars:
+    postfix_map_spec: "{{ pf_smtp_generic_maps }}"
+    postfix_map_add_entries: "{{ pf_add_smtp_generic | default([], true) }}"
+    postfix_map_remove_entries: "{{ pf_remove_smtp_generic | default([], true) }}"
+  tags:
+    - postfix
+    - config
+  block:
+    - name: Manage SMTP generic map entries
+      ansible.builtin.include_tasks: manage_map.yml
