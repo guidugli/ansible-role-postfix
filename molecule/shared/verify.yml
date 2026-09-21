@@ -101,6 +101,8 @@
       loop:
         - option: sender_canonical_maps
           expected: hash:/etc/postfix/sender_canonical
+        - option: sender_canonical_classes
+          expected: envelope_sender
         - option: smtp_generic_maps
           expected: hash:/etc/postfix/generic
       register: postfix_address_map_options

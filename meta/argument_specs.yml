@@ -148,6 +148,15 @@ argument_specs:
         elements: str
         required: false
         description: Aliases to remove from /etc/aliases.
+      pf_sender_canonical_classes:
+        type: list
+        elements: str
+        default:
+          - envelope_sender
+        choices:
+          - envelope_sender
+          - header_sender
+        description: Sender address classes rewritten through sender_canonical_maps.
       pf_sender_canonical_maps:
         type: str
         required: false

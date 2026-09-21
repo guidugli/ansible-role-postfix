@@ -51,6 +51,9 @@ pf_inet_protocols: ipv4
 #   - oldalias
 
 # Optional sender canonical map. The map path must include its lookup type.
+# Limit rewriting to the SMTP envelope sender so the original From header is preserved.
+pf_sender_canonical_classes:
+  - envelope_sender
 # pf_sender_canonical_maps: hash:/etc/postfix/sender_canonical
 # pf_add_sender_canonical:
 #   - from: root@localhost

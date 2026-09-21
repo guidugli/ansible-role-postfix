@@ -69,6 +69,7 @@
     - pf_smtpd_helo_restrictions
     - pf_smtpd_recipient_restrictions
     - pf_smtpd_data_restrictions
+    - pf_sender_canonical_classes
     - pf_add_sender_canonical
     - pf_remove_sender_canonical
     - pf_add_smtp_generic
@@ -110,6 +111,19 @@
     quiet: true
   when:
     - pf_smtp_tls_mandatory_ciphers is defined
+  tags:
+    - postfix
+    - validate
+
+- name: Check sender canonical class values
+  ansible.builtin.assert:
+    that:
+      - item is string
+      - item in pf_sender_canonical_classes_vv
+    quiet: true
+    fail_msg: >-
+      pf_sender_canonical_classes entries must be envelope_sender or header_sender
+  loop: "{{ pf_sender_canonical_classes }}"
   tags:
     - postfix
     - validate
@@ -157,6 +171,9 @@
         | flatten
         | length > 0
       }}
+  tags:
+    - postfix
+    - validate
 
 - name: Check pf_inet_protocols values
   ansible.builtin.assert:

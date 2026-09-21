@@ -39,6 +39,8 @@ pf_add_aliases:
 pf_remove_aliases:
   - abc
 
+pf_sender_canonical_classes:
+  - envelope_sender
 pf_sender_canonical_maps: hash:/etc/postfix/sender_canonical
 pf_add_sender_canonical:
   - from: root@localhost

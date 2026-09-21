@@ -219,6 +219,7 @@
     - pf_smtpd_helo_restrictions
     - pf_smtpd_recipient_restrictions
     - pf_smtpd_data_restrictions
+    - pf_sender_canonical_classes
   tags:
     - postfix
     - config

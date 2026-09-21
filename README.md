@@ -1,7 +1,4 @@
 [![CI](https://github.com/guidugli/ansible-role-postfix/actions/workflows/CI.yml/badge.svg)](https://github.com/guidugli/ansible-role-postfix/actions/workflows/CI.yml) [![Release](https://img.shields.io/github/v/release/guidugli/ansible-role-postfix?display_name=tag)](https://github.com/guidugli/ansible-role-postfix/releases) [![Galaxy](https://img.shields.io/badge/galaxy-guidugli.postfix-blue)](https://galaxy.ansible.com/ui/standalone/roles/guidugli/postfix/) [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
-[![Release](https://img.shields.io/github/v/tag/guidugli/ansible-role-postfix?sort=semver)](https://github.com/guidugli/ansible-role-postfix/tags)
-[![Galaxy](https://img.shields.io/badge/galaxy-guidugli.postfix-blue.svg)](https://galaxy.ansible.com/ui/standalone/roles/guidugli/postfix/)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 # Ansible Role: postfix
 
@@ -14,9 +11,22 @@ Installs and configures Postfix as a local relay client. The role is intended fo
 - The caller must provide privilege escalation externally when the target host requires root access for package installation or files under `/etc`.
 - `containers.podman` collection `>=1.10.0` is required for Molecule scenarios.
 
+## Features
+
+- Installs and configures Postfix as a local relay client.
+- Manages selected `main.cf` options idempotently with `postconf`.
+- Manages SASL credentials, aliases, sender canonical maps, and SMTP generic maps.
+- Limits sender canonical rewriting to the envelope sender by default, preserving the original `From:` header.
+- Rebuilds changed indexed maps with `postmap`.
+- Validates behavior in shared Molecule verification used by default and systemd scenarios.
+
+## Supported platforms
+
+The supported Fedora, Ubuntu, and Debian versions are defined in `molecule/shared/vars.yml` and rendered into the scenario inventories.
+
 ## Variables
 
-Only `pf_inet_interfaces` is enabled by default. Optional variables may be supplied by inventory, group vars, host vars, or play vars. When an optional variable is not defined, the role leaves the corresponding Postfix setting untouched.
+The role defaults to loopback-only interfaces, IPv4, and sender canonical rewriting limited to the envelope sender. Optional variables may be supplied by inventory, group vars, host vars, or play vars. When an optional variable is not defined, the role leaves the corresponding Postfix setting untouched.
 
 | Variable | Type | Default | Explanation |
 | --- | --- | --- | --- |
@@ -45,6 +55,7 @@ Only `pf_inet_interfaces` is enabled by default. Optional variables may be suppl
 | `pf_smtpd_delay_reject` | boolean | undefined | Writes `smtpd_delay_reject = yes/no`. |
 | `pf_smtpd_data_restrictions` | list(string) | undefined | DATA restrictions written as a comma-separated Postfix value. |
 | `pf_inet_protocols` | string | undefined | Protocol family used by Postfix: `all`, `ipv4`, or `ipv6`. |
+| `pf_sender_canonical_classes` | list(string) | `envelope_sender` | Sender address classes rewritten by `sender_canonical_maps`. The default preserves the original `From:` header. |
 | `pf_add_aliases` | list(dict) | undefined | Adds or updates `/etc/aliases` entries with `from` and `to` keys. |
 | `pf_remove_aliases` | list(string) | undefined | Removes matching aliases from `/etc/aliases`. |
 
@@ -69,6 +80,8 @@ Internal variables in `vars/main.yml` define OS-specific package lists, service 
     pf_smtp_sasl_password_maps: hash:/etc/postfix/sasl/sasl_passwd
     pf_smtp_tls_security_level: encrypt
     pf_inet_protocols: ipv4
+    pf_sender_canonical_classes:
+      - envelope_sender
     pf_sender_canonical_maps: hash:/etc/postfix/sender_canonical
     pf_add_sender_canonical:
       - from: root@localhost
@@ -106,7 +119,7 @@ The `default` scenario runs rootful containers with a simple sleep command. The 
 - **Systemd behavior:** service enable and restart tasks run only when `ansible_facts['service_mgr'] == 'systemd'`. Non-systemd containers still install packages, write configuration, and run `postfix check`, but service management is skipped.
 - **Idempotency:** configuration is managed with Ansible modules, command validation uses `changed_when: false`, and handlers run only when notified by changed files.
 
-### Release workflow
+## Release workflow
 
 Refresh generated metadata and run the release helper:
 
@@ -115,10 +128,10 @@ Refresh generated metadata and run the release helper:
 ./scripts/release.sh --version v1.2.0 --message "Release v1.2.0"
 ```
 
-### License
+## License
 
 MIT
 
-### Author
+## Author
 
 Carlos Guidugli

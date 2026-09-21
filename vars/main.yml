@@ -80,6 +80,10 @@ pf_inet_protocols_vv:
   - ipv4
   - ipv6
 
+pf_sender_canonical_classes_vv:
+  - envelope_sender
+  - header_sender
+
 pf_variable_map:
   pf_inet_interfaces: inet_interfaces
   pf_email_address: email_address
@@ -107,4 +111,5 @@ pf_variable_map:
   pf_inet_protocols: inet_protocols
   pf_smtpd_sender_login_maps: smtpd_sender_login_maps
   pf_sender_canonical_maps: sender_canonical_maps
+  pf_sender_canonical_classes: sender_canonical_classes
   pf_smtp_generic_maps: smtp_generic_maps
