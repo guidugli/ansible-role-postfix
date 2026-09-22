@@ -1,4 +1,4 @@
-[![CI](https://github.com/guidugli/ansible-role-postfix/actions/workflows/CI.yml/badge.svg)](https://github.com/guidugli/ansible-role-postfix/actions/workflows/CI.yml) [![Release](https://img.shields.io/github/v/release/guidugli/ansible-role-postfix?display_name=tag)](https://github.com/guidugli/ansible-role-postfix/releases) [![Galaxy](https://img.shields.io/badge/galaxy-guidugli.postfix-blue)](https://galaxy.ansible.com/ui/standalone/roles/guidugli/postfix/) [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![CI](https://github.com/guidugli/ansible-role-postfix/actions/workflows/CI.yml/badge.svg)](https://github.com/guidugli/ansible-role-postfix/actions/workflows/CI.yml) [![Release](https://img.shields.io/github/v/tag/guidugli/ansible-role-postfix?sort=semver)](https://github.com/guidugli/ansible-role-postfix/tags) [![Galaxy](https://img.shields.io/badge/galaxy-guidugli.postfix-blue.svg)](https://galaxy.ansible.com/ui/standalone/roles/guidugli/postfix/) [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 # Ansible Role: postfix
 
@@ -19,6 +19,7 @@ Installs and configures Postfix as a local relay client. The role is intended fo
 - Limits sender canonical rewriting to the envelope sender by default, preserving the original `From:` header.
 - Rebuilds changed indexed maps with `postmap`.
 - Validates behavior in shared Molecule verification used by default and systemd scenarios.
+- Optionally prefixes existing `Subject:` headers with the managed host identity using a Postfix `regexp:` table.
 
 ## Supported platforms
 
@@ -55,6 +56,9 @@ The role defaults to loopback-only interfaces, IPv4, and sender canonical rewrit
 | `pf_smtpd_delay_reject` | boolean | undefined | Writes `smtpd_delay_reject = yes/no`. |
 | `pf_smtpd_data_restrictions` | list(string) | undefined | DATA restrictions written as a comma-separated Postfix value. |
 | `pf_inet_protocols` | string | undefined | Protocol family used by Postfix: `all`, `ipv4`, or `ipv6`. |
+| `pf_subject_prefix_enabled` | boolean | `false` | Enable host-based prefixing for existing `Subject:` headers. |
+| `pf_subject_prefix` | string | `ansible_facts['fqdn']` | Text placed in square brackets at the start of existing `Subject:` headers. |
+| `pf_header_checks_path` | string | `/etc/postfix/header_checks` | Path to the managed Postfix `regexp:` header-checks table. |
 | `pf_sender_canonical_classes` | list(string) | `envelope_sender` | Sender address classes rewritten by `sender_canonical_maps`. The default preserves the original `From:` header. |
 | `pf_add_aliases` | list(dict) | undefined | Adds or updates `/etc/aliases` entries with `from` and `to` keys. |
 | `pf_remove_aliases` | list(string) | undefined | Removes matching aliases from `/etc/aliases`. |
@@ -80,6 +84,8 @@ Internal variables in `vars/main.yml` define OS-specific package lists, service 
     pf_smtp_sasl_password_maps: hash:/etc/postfix/sasl/sasl_passwd
     pf_smtp_tls_security_level: encrypt
     pf_inet_protocols: ipv4
+    pf_subject_prefix_enabled: true
+    pf_subject_prefix: "{{ ansible_facts['fqdn'] }}"
     pf_sender_canonical_classes:
       - envelope_sender
     pf_sender_canonical_maps: hash:/etc/postfix/sender_canonical
@@ -96,6 +102,12 @@ Internal variables in `vars/main.yml` define OS-specific package lists, service 
   roles:
     - role: guidugli.postfix
 ```
+
+## Subject prefix behavior
+
+When `pf_subject_prefix_enabled` is `true`, the role configures `header_checks` with a POSIX `regexp:` table and prefixes every existing `Subject:` header with `[pf_subject_prefix]`. The default prefix is the target host FQDN. Already-prefixed subjects are left unchanged. Messages without a `Subject:` header are not given one.
+
+The target Postfix installation must report `regexp` in `postconf -m`. This feature does not require the optional PCRE map package.
 
 ## Molecule Testing
 
@@ -114,7 +126,7 @@ The `default` scenario runs rootful containers with a simple sleep command. The 
 
 ## Execution Notes
 
-- **Privilege model:** the role never sets `become`, `become_user`, or `become_method`. Package management, `/etc/postfix`, `/etc/aliases`, `postmap`, and `newaliases` require root on real hosts, so playbooks should set `become: true` when needed.
+- **Privilege model:** the role never sets `become`, `become_user`, or `become_method`. Package management, `/etc/postfix`, `/etc/aliases`, header-check configuration, `postmap`, and `newaliases` require root on real hosts, so playbooks should set `become: true` when needed.
 - **Container behavior:** Molecule containers run as root, so the converge playbook intentionally uses `become: false`. This keeps role logic independent from privilege escalation policy.
 - **Systemd behavior:** service enable and restart tasks run only when `ansible_facts['service_mgr'] == 'systemd'`. Non-systemd containers still install packages, write configuration, and run `postfix check`, but service management is skipped.
 - **Idempotency:** configuration is managed with Ansible modules, command validation uses `changed_when: false`, and handlers run only when notified by changed files.

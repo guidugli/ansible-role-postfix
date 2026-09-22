@@ -148,6 +148,18 @@ argument_specs:
         elements: str
         required: false
         description: Aliases to remove from /etc/aliases.
+      pf_subject_prefix_enabled:
+        type: bool
+        default: false
+        description: Prefix existing Subject headers with the managed host identity.
+      pf_subject_prefix:
+        type: str
+        default: "{{ ansible_facts['fqdn'] }}"
+        description: Text placed in square brackets at the start of existing Subject headers.
+      pf_header_checks_path:
+        type: str
+        default: /etc/postfix/header_checks
+        description: Absolute path to the managed Postfix regexp header-checks table.
       pf_sender_canonical_classes:
         type: list
         elements: str

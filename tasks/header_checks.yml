@@ -1,0 +1,83 @@
+---
+- name: Read supported Postfix lookup table types
+  ansible.builtin.command:
+    argv:
+      - postconf
+      - -m
+  register: postfix_lookup_table_types
+  changed_when: false
+  tags:
+    - postfix
+    - validate
+
+- name: Verify Postfix regexp lookup support
+  ansible.builtin.assert:
+    that:
+      - "'regexp' in postfix_lookup_table_types.stdout_lines"
+    fail_msg: >-
+      This Postfix installation does not provide the regexp lookup type required
+      for subject prefixing. Check the operating-system Postfix packaging.
+    quiet: true
+  tags:
+    - postfix
+    - validate
+
+- name: Render Postfix subject prefix header checks
+  ansible.builtin.copy:
+    dest: "{{ pf_header_checks_path }}"
+    owner: "{{ pf_main_cf_owner }}"
+    group: "{{ pf_main_cf_group }}"
+    mode: '0644'
+    backup: true
+    content: |
+      /^Subject:[[:space:]]*\[{{ pf_subject_prefix | regex_escape }}\][[:space:]]/ DUNNO
+      /^Subject:[[:space:]]*(.*)$/ REPLACE Subject: [{{ pf_subject_prefix }}] $1
+  notify: Restart postfix
+  tags:
+    - postfix
+    - config
+
+- name: Read current Postfix header_checks value
+  ansible.builtin.command:
+    argv:
+      - postconf
+      - -h
+      - header_checks
+  register: postfix_current_header_checks
+  changed_when: false
+  tags:
+    - postfix
+    - config
+
+- name: Configure Postfix regexp header checks
+  ansible.builtin.command:
+    argv:
+      - postconf
+      - -e
+      - "header_checks=regexp:{{ pf_header_checks_path }}"
+  when: >-
+    postfix_current_header_checks.stdout | trim
+    != 'regexp:' ~ pf_header_checks_path
+  changed_when: true
+  notify: Restart postfix
+  tags:
+    - postfix
+    - config
+
+- name: Validate Postfix subject prefix rule
+  ansible.builtin.command:
+    argv:
+      - postmap
+      - -hmq
+      - '-'
+      - "regexp:{{ pf_header_checks_path }}"
+    stdin: |
+      Subject: Ansible subject prefix test
+  register: postfix_subject_prefix_rule
+  changed_when: false
+  failed_when: >-
+    'REPLACE Subject: [' ~ pf_subject_prefix ~ '] Ansible subject prefix test'
+    not in postfix_subject_prefix_rule.stdout
+  tags:
+    - postfix
+    - validate

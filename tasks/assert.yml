@@ -20,6 +20,7 @@
     - pf_smtpd_helo_required
     - pf_strict_rfc821_envelopes
     - pf_smtpd_delay_reject
+    - pf_subject_prefix_enabled
   tags:
     - postfix
     - validate
@@ -44,10 +45,12 @@
     - pf_mynetworks
     - pf_smtp_tls_capath
     - pf_smtp_tls_cafile
+    - pf_header_checks_path
     - pf_mydomain
     - pf_smtpd_sender_login_maps
     - pf_sender_canonical_maps
     - pf_smtp_generic_maps
+    - pf_subject_prefix
   tags:
     - postfix
     - validate

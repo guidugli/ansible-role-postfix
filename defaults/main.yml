@@ -68,3 +68,9 @@ pf_sender_canonical_classes:
 #     to: sender@example.com
 # pf_remove_smtp_generic:
 #   - old-sender@localhost
+
+# Optionally prefix every existing Subject header with the managed host identity.
+# Postfix regexp maps are used, so no postfix-pcre package is required.
+pf_subject_prefix_enabled: false
+pf_subject_prefix: "{{ ansible_facts['fqdn'] }}"
+pf_header_checks_path: /etc/postfix/header_checks

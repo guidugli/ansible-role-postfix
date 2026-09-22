@@ -111,3 +111,58 @@
       tags:
         - postfix
         - validate
+
+    - name: Read configured Postfix header_checks value
+      ansible.builtin.command:
+        argv:
+          - postconf
+          - -h
+          - header_checks
+      register: postfix_header_checks
+      changed_when: false
+      tags:
+        - postfix
+        - validate
+
+    - name: Verify Postfix subject prefix configuration
+      ansible.builtin.assert:
+        that:
+          - postfix_header_checks.stdout | trim == 'regexp:/etc/postfix/header_checks'
+        quiet: true
+      tags:
+        - postfix
+        - validate
+
+    - name: Test Postfix subject prefix regexp rule
+      ansible.builtin.command:
+        argv:
+          - postmap
+          - -hmq
+          - '-'
+          - regexp:/etc/postfix/header_checks
+        stdin: |
+          Subject: Molecule verification
+      register: postfix_subject_prefix_test
+      changed_when: false
+      failed_when: >-
+        'REPLACE Subject: [' ~ ansible_facts['hostname'] ~ '] Molecule verification'
+        not in postfix_subject_prefix_test.stdout
+      tags:
+        - postfix
+        - validate
+
+    - name: Verify already prefixed subjects are not modified again
+      ansible.builtin.command:
+        argv:
+          - postmap
+          - -hmq
+          - '-'
+          - regexp:/etc/postfix/header_checks
+        stdin: |
+          Subject: [{{ ansible_facts['hostname'] }}] Existing prefix
+      register: postfix_subject_prefix_duplicate_test
+      changed_when: false
+      failed_when: "'DUNNO' not in postfix_subject_prefix_duplicate_test.stdout"
+      tags:
+        - postfix
+        - validate

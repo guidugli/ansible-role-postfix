@@ -53,3 +53,7 @@ pf_add_smtp_generic:
     to: generic@example.com
 pf_remove_smtp_generic:
   - obsolete@localhost
+
+pf_subject_prefix_enabled: true
+pf_subject_prefix: "{{ ansible_facts['hostname'] }}"
+pf_header_checks_path: /etc/postfix/header_checks

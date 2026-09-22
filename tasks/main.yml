@@ -22,6 +22,14 @@
     - postfix
     - config
 
+- name: Include Postfix subject prefix tasks
+  ansible.builtin.include_tasks: header_checks.yml
+  when: pf_subject_prefix_enabled | bool
+  tags:
+    - postfix
+    - config
+    - validate
+
 - name: Include aliases management tasks
   ansible.builtin.include_tasks: aliases.yml
   tags:
