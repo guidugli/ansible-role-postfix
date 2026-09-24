@@ -37,6 +37,9 @@ _pf_packages:
   Ubuntu:
     - postfix
     - libsasl2-modules
+  Debian:
+    - postfix
+    - libsasl2-modules
 
 pf_packages: >-
   {{ _pf_packages[ansible_facts['distribution'] ~ '-' ~ ansible_facts['distribution_major_version']]
